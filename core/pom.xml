@@ -119,6 +119,11 @@
             <artifactId>logback-classic</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.javafaker</groupId>
+            <artifactId>javafaker</artifactId>
+            <version>1.0.2</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -163,6 +168,52 @@
                     <failOnNoGitDirectory>false</failOnNoGitDirectory>
                     <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
                 </configuration>
+            </plugin>
+            <!-- ===================== -->
+            <!--      PITEST (NEW)    -->
+            <!-- ===================== -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <!-- Version largement disponible et compatible Java 17 -->
+                <version>1.15.0</version>
+                <configuration>
+                    <!-- Muter uniquement le code util (ajuste si besoin) -->
+                    <targetClasses>
+                        <param>com.graphhopper.util.*</param>
+                    </targetClasses>
+
+                    <!-- Exécuter les tests de ce module -->
+                    <targetTests>
+                        <param>com.graphhopper.util.*</param>
+                    </targetTests>
+
+                    <!-- Formats de rapport -->
+                    <outputFormats>
+                        <param>HTML</param>
+                        <param>XML</param>
+                    </outputFormats>
+
+                    <!-- Mutateurs par défaut -->
+                    <mutators>
+                        <mutator>DEFAULTS</mutator>
+                    </mutators>
+
+                    <!-- Confort / perf -->
+                    <threads>4</threads>
+                    <timeoutConst>8000</timeoutConst>
+
+                    <!-- Inclus/exclus : on laisse simple pour commencer -->
+                    <failWhenNoMutations>false</failWhenNoMutations>
+                </configuration>
+                <!-- Plugin JUnit 5 pour PIT -->
+                <dependencies>
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>1.2.1</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
 
