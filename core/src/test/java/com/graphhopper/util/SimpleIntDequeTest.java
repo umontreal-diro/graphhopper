@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayNameGenerator.Simple;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -78,5 +79,37 @@ public class SimpleIntDequeTest {
 
         assertEquals(52, deque.pop());
         assertEquals(10, deque.getSize());
+    }
+
+    @Test
+    public void testToStringEmpty() {
+        SimpleIntDeque deque = new SimpleIntDeque(8, 2f);
+        assertEquals("", deque.toString(), "Empty deque should be represented as []");
+    }
+
+    @Test
+    public void testToStringSingleElement() {
+        SimpleIntDeque deque = new SimpleIntDeque(8, 2f);
+        deque.push(42);
+        assertEquals("42", deque.toString(), "Deque with one element should be represented correctly");
+    }
+
+    @Test
+    public void testToStringNonEmpty() {
+        SimpleIntDeque deque = new SimpleIntDeque(8, 2f);
+        deque.push(1);
+        deque.push(2);
+        deque.push(3);
+        assertEquals("1, 2, 3", deque.toString(), "Deque with elements should be represented correctly");
+    }
+
+    @Test
+    public void testToStringAfterPop() {
+        SimpleIntDeque deque = new SimpleIntDeque();
+        deque.push(10);
+        deque.push(20);
+        deque.push(30);
+        deque.pop();
+        assertEquals("20, 30", deque.toString(), "Deque after popping an element should be represented correctly");
     }
 }
