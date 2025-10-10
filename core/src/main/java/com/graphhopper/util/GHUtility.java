@@ -609,7 +609,7 @@ public class GHUtility {
      * where A-C is the same distance as A-B-C. In this case the shortest path is not well defined in terms of nodes.
      * This method checks if two node-paths are equal except for such an edge.
      */
-    private static boolean pathsEqualExceptOneEdge(Graph graph, IntIndexedContainer p1, IntIndexedContainer p2) {
+    static boolean pathsEqualExceptOneEdge(Graph graph, IntIndexedContainer p1, IntIndexedContainer p2) {
         if (p1.equals(p2))
             throw new IllegalArgumentException("paths are equal");
         if (Math.abs(p1.size() - p2.size()) != 1)
@@ -654,7 +654,7 @@ public class GHUtility {
         return distance;
     }
 
-    private static void fail(String message) {
+    static void fail(String message) {
         throw new AssertionError(message);
     }
 
