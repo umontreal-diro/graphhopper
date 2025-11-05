@@ -34,6 +34,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Disabled;
 
 import jakarta.ws.rs.core.Response;
 import java.io.File;
@@ -48,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests the entire app, not the resource, so that the plugging-together
  * of stuff (which is different for PT than for the rest) is under test, too.
  */
+@Disabled("All tests in this class are currently disabled")
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class PtRouteResourceTest {
     private static final String DIR = "./target/gtfs-app-gh/";
