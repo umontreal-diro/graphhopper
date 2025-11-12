@@ -1,0 +1,32 @@
+name: TP3 - Mutation Testing and Quality Guard
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  mutation_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build and run tests
+        run: mvn -B clean verify
+
+      - name: Run PIT Mutation Testing
+        run: mvn -B org.pitest:pitest-maven:mutationCoverage
+
+      - name: Check if mutation score decreased
+        run: ./scripts/check_pit_delta.sh
+
+      - name: Rickroll on failure 
+        if: failure()
+        uses: ./.github/actions/rickroll
