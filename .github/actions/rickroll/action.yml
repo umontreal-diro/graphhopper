@@ -1,11 +1,12 @@
 name: "Rickroll"
-description: "Displays a Rickroll if the build fails"
+description: "Rickroll triggered when the build fails"
+
 runs:
   using: "composite"
   steps:
-    - name: Never Gonna Give You Up 
+    - name: Never Gonna Give You Up 🎵
+      shell: bash
       run: |
         echo " Le build a échoué !"
-        echo "Mais voici un peu de motivation "
+        echo "Mais voici un peu de motivation..."
         echo "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-
