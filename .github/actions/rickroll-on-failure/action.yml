@@ -1,0 +1,36 @@
+name: 'Rickroll on Test Failure'
+description: 'Never gonna give you up! Displays a rickroll when tests fail 🎵'
+author: 'Karim Hozaien'
+
+inputs:
+  test-result:
+    description: 'Result of the test step (success or failure)'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Display rickroll on test failure
+      if: inputs.test-result == 'failure'
+      shell: bash
+      run: |
+        echo "========================================"
+        echo "NEVER GONNA GIVE YOU UP"
+        echo "========================================"
+        echo ""
+        echo "Test execution failed."
+        echo ""
+        echo "Reference: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        echo ""
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Author: ${{ github.actor }}"
+        echo ""
+        echo "========================================"
+        
+        echo "::notice title=Test Failure - Rickrolled::Tests failed on commit ${{ github.sha }}"
+
+branding:
+  icon: 'music'
+  color: 'red'
+

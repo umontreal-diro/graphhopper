@@ -18,15 +18,20 @@
 
 package com.graphhopper.util.shapes;
 
+//import com.github.javafaker.Faker;
+import com.github.javafaker.Faker;
+import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Robin Boldt
  */
 public class PolygonTest {
+    private static final GeometryFactory factory = new GeometryFactory();
 
     @Test
     public void testContains(){
@@ -85,4 +90,113 @@ public class PolygonTest {
 
     }
 
+
+    @Test
+    public void testConstructorWithMismatchedArraysThrows() {
+        double[] lats = {0, 1, 2};
+        double[] lons = {0, 1};
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> new Polygon(lats, lons));
+        assertTrue(ex.getMessage().contains("Points must be of equal length"));
+    }
+
+    @Test
+    public void testConstructorWithEmptyArrayThrows() {
+        double[] lats = {};
+        double[] lons = {};
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> new Polygon(lats, lons));
+        assertTrue(ex.getMessage().contains("Points must not be empty"));
+    }
+
+    @Test
+    public void testGetBoundsAndMinMaxCoordinates() {
+        Polygon square = new Polygon(new double[]{0, 0, 2, 2}, new double[]{0, 2, 2, 0});
+        assertEquals(0, square.getMinLat(), 1e-6);
+        assertEquals(0, square.getMinLon(), 1e-6);
+        assertEquals(2, square.getMaxLat(), 1e-6);
+        assertEquals(2, square.getMaxLon(), 1e-6);
+        assertNotNull(square.getBounds());
+    }
+
+    @Test
+    public void testIsRectangleTrue() {
+        org.locationtech.jts.geom.Polygon rect = factory.createPolygon(new Coordinate[]{
+                new Coordinate(0, 0),
+                new Coordinate(0, 1),
+                new Coordinate(1, 1),
+                new Coordinate(1, 0),
+                new Coordinate(0, 0)
+        });
+        Polygon p = Polygon.create(rect);
+        assertTrue(p.isRectangle());
+    }
+
+    @Test
+    public void testIsRectangleFalse() {
+        org.locationtech.jts.geom.Polygon triangle = factory.createPolygon(new Coordinate[]{
+                new Coordinate(0, 0),
+                new Coordinate(1, 0),
+                new Coordinate(0.5, 1),
+                new Coordinate(0, 0)
+        });
+        Polygon p = Polygon.create(triangle);
+        assertFalse(p.isRectangle());
+    }
+
+    @Test
+    public void testIntersectsReturnsTrue() {
+        Polygon square = new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0});
+        PointList path = new PointList();
+        path.add(0.5, 0.5);
+        path.add(0.5, 2);
+        path.makeImmutable();
+        assertTrue(square.intersects(path));
+    }
+
+    @Test
+    public void testIntersectsReturnsFalse() {
+        Polygon square = new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0});
+        PointList path = new PointList();
+        path.add(2, 2);
+        path.add(3, 3);
+        path.makeImmutable();
+        assertFalse(square.intersects(path));
+    }
+
+    @Test
+    public void testToStringContainsGeometryInfo() {
+        Polygon square = new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0});
+        String s = square.toString();
+        assertTrue(s.contains("polygon"));
+        assertTrue(s.contains("points"));
+        assertTrue(s.contains("geometries"));
+    }
+
+    @Test
+    public void testStaticCreateMethod() {
+        org.locationtech.jts.geom.Polygon jtsPoly = factory.createPolygon(new Coordinate[]{
+                new Coordinate(0, 0),
+                new Coordinate(0, 1),
+                new Coordinate(1, 1),
+                new Coordinate(1, 0),
+                new Coordinate(0, 0)
+        });
+        Polygon p = Polygon.create(jtsPoly);
+        assertNotNull(p);
+        assertEquals(p.prepPolygon.getGeometry(), jtsPoly);
+    }
+
+
+    @Test
+    public void testContainsWithRandomPointsUsingFaker() {
+        Faker faker = new Faker();
+        double[] lats = {0, 0, 10, 10};
+        double[] lons = {0, 10, 10, 0};
+        Polygon square = new Polygon(lats, lons);
+
+        double lat = faker.number().randomDouble(4, 0, 10);
+        double lon = faker.number().randomDouble(4, 0, 10);
+
+        boolean inside = square.contains(lat, lon);
+        assertEquals((lat >= 0 && lat <= 10 && lon >= 0 && lon <= 10), inside);
+    }
 }
