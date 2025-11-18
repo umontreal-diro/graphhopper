@@ -21,13 +21,15 @@ jobs:
       - name: Build and run tests
         run: mvn -B clean verify
 
-      - name: Run PIT Mutation Testing
-        run: mvn -B org.pitest:pitest-maven:mutationCoverage
+      - name: Run mutation tests
+        run: |
+          cd core
+          mvn -B org.pitest:pitest-maven:mutationCoverage
 
       - name: Check if mutation score decreased
         run: ./scripts/check_pit_delta.sh
 
       - name: Rickroll on failure
         if: failure()
-        uses: TejasvOnly/random-rickroll@master
+        uses: TejasvOnly/random-rickroll@main
 
