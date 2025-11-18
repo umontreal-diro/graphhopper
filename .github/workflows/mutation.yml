@@ -31,5 +31,5 @@ jobs:
 
       - name: Rickroll on failure
         if: failure()
-        uses: TejasvOnly/random-rickroll@master
+        uses: ./.github/actions/rickroll
 
