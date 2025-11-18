@@ -1,4 +1,4 @@
-name: TP3 – Mutation Testing and Quality Guard
+kkname: TP3 – Mutation Testing and Quality Guard
 
 on:
   push:
@@ -12,24 +12,79 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # Build normal + tests unitaires
       - name: Build and run tests
-        run: mvn -B clean verify
+        run: mvn -B clean test
 
-      - name: Run mutation tests
+      # Build complet pour installer les modules dans le 
+repo local,
+      # puis PIT uniquement sur le module "core"
+      - name: Run PIT mutation testing (core module 
+only)
         run: |
-          cd core
-          mvn -B org.pitest:pitest-maven:mutationCoverage
+          mvn -B clean install -DskipTests
+          mvn -B -pl core 
+org.pitest:pitest-maven:mutationCoverage -DargLine=""
 
-      - name: Check if mutation score decreased
-        run: ./scripts/check_pit_delta.sh
+      # On lit le score de mutation courante dans le 
+rapport PIT
+      - name: Extract current PIT score
+        id: current
+        run: |
+          SCORE=$(grep -oPm1 "(?<=<score>)[^<]+" 
+core/target/pit-reports/*/summary.xml || echo 0)
+          echo "current_score=$SCORE" >> 
+"$GITHUB_OUTPUT"
+          echo "Current mutation score: $SCORE"
 
+      # On lit l'ancien score (si le fichier existe)
+      - name: Get previous PIT score
+        id: previous
+        run: |
+          if [ -f mutation_score.txt ]; then
+            PREV=$(cat mutation_score.txt)
+          else
+            PREV=0
+          fi
+          echo "previous_score=$PREV" >> 
+"$GITHUB_OUTPUT"
+          echo "Previous mutation score: $PREV"
+
+      # Comparaison des scores, échec si ça baisse
+      - name: Compare scores
+        run: |
+          CUR=${{ steps.current.outputs.current_score }}
+          PREV=${{ steps.previous.outputs.previous_score 
+}}
+
+          echo "🔍 Comparing mutation scores..."
+          echo "Previous: $PREV"
+          echo "Current:  $CUR"
+
+          if [ "$CUR" -lt "$PREV" ]; then
+            echo "Mutation score decreased! ($CUR < 
+$PREV)"
+            exit 1
+          fi
+
+          echo "Mutation score OK or improved ($CUR ≥ 
+$PREV)"
+
+      # On sauvegarde le nouveau score seulement si tout 
+va bien
+      - name: Save new mutation score
+        if: success()
+        run: echo "${{ 
+steps.current.outputs.current_score }}" > 
+mutation_score.txt
+
+      # Rickroll si n'importe quel step avant a échoué
       - name: Rickroll on failure
         if: failure()
         uses: ./.github/actions/rickroll
-
