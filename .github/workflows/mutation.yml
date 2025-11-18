@@ -18,13 +18,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Build normal + tests unitaires
       - name: Build and run tests
         run: mvn -B clean test
 
-      # Build complet pour installer les modules dans le 
-repo local,
-      # puis PIT uniquement sur le module "core"
       - name: Run PIT mutation testing (core module 
 only)
         run: |
@@ -32,8 +28,6 @@ only)
           mvn -B -pl core 
 org.pitest:pitest-maven:mutationCoverage -DargLine=""
 
-      # On lit le score de mutation courante dans le 
-rapport PIT
       - name: Extract current PIT score
         id: current
         run: |
@@ -43,7 +37,6 @@ core/target/pit-reports/*/summary.xml || echo 0)
 "$GITHUB_OUTPUT"
           echo "Current mutation score: $SCORE"
 
-      # On lit l'ancien score (si le fichier existe)
       - name: Get previous PIT score
         id: previous
         run: |
@@ -56,14 +49,13 @@ core/target/pit-reports/*/summary.xml || echo 0)
 "$GITHUB_OUTPUT"
           echo "Previous mutation score: $PREV"
 
-      # Comparaison des scores, échec si ça baisse
       - name: Compare scores
         run: |
           CUR=${{ steps.current.outputs.current_score }}
           PREV=${{ steps.previous.outputs.previous_score 
 }}
 
-          echo "🔍 Comparing mutation scores..."
+          echo "Comparing mutation scores..."
           echo "Previous: $PREV"
           echo "Current:  $CUR"
 
@@ -76,15 +68,12 @@ $PREV)"
           echo "Mutation score OK or improved ($CUR ≥ 
 $PREV)"
 
-      # On sauvegarde le nouveau score seulement si tout 
-va bien
       - name: Save new mutation score
         if: success()
         run: echo "${{ 
 steps.current.outputs.current_score }}" > 
 mutation_score.txt
 
-      # Rickroll si n'importe quel step avant a échoué
       - name: Rickroll on failure
         if: failure()
         uses: ./.github/actions/rickroll
