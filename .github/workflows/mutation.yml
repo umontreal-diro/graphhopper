@@ -27,6 +27,7 @@ jobs:
       - name: Check if mutation score decreased
         run: ./scripts/check_pit_delta.sh
 
-      - name: Rickroll on failure 
+      - name: Rickroll on failure
         if: failure()
         uses: ./.github/actions/rickroll
+
