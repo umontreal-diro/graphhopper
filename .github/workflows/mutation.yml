@@ -24,16 +24,13 @@ jobs:
       - name: Run PIT mutation testing (core module only)
         run: |
           mvn -B clean install -DskipTests
-          mvn -B -pl core 
-org.pitest:pitest-maven:mutationCoverage -DargLine=""
+          mvn -B -pl core org.pitest:pitest-maven:mutationCoverage -DargLine=""
 
       - name: Extract current PIT score
         id: current
         run: |
-          SCORE=$(grep -oPm1 "(?<=<score>)[^<]+" 
-core/target/pit-reports/*/summary.xml || echo 0)
-          echo "current_score=$SCORE" >> 
-"$GITHUB_OUTPUT"
+          SCORE=$(grep -oPm1 "(?<=<score>)[^<]+" core/target/pit-reports/*/summary.xml || echo 0)
+          echo "current_score=$SCORE" >> "$GITHUB_OUTPUT"
           echo "Current mutation score: $SCORE"
 
       - name: Get previous PIT score
@@ -44,34 +41,28 @@ core/target/pit-reports/*/summary.xml || echo 0)
           else
             PREV=0
           fi
-          echo "previous_score=$PREV" >> 
-"$GITHUB_OUTPUT"
+          echo "previous_score=$PREV" >> "$GITHUB_OUTPUT"
           echo "Previous mutation score: $PREV"
 
       - name: Compare scores
         run: |
           CUR=${{ steps.current.outputs.current_score }}
-          PREV=${{ steps.previous.outputs.previous_score 
-}}
+          PREV=${{ steps.previous.outputs.previous_score }}
 
           echo "Comparing mutation scores..."
           echo "Previous: $PREV"
           echo "Current:  $CUR"
 
           if [ "$CUR" -lt "$PREV" ]; then
-            echo "Mutation score decreased! ($CUR < 
-$PREV)"
+            echo "Mutation score decreased! ($CUR < $PREV)"
             exit 1
           fi
 
-          echo "Mutation score OK or improved ($CUR ≥ 
-$PREV)"
+          echo "Mutation score OK or improved ($CUR ≥$PREV)"
 
       - name: Save new mutation score
         if: success()
-        run: echo "${{ 
-steps.current.outputs.current_score }}" > 
-mutation_score.txt
+        run: echo "${{ steps.current.outputs.current_score }}" > mutation_score.txt
 
       - name: Rickroll on failure
         if: failure()
