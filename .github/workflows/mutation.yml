@@ -55,14 +55,15 @@ jobs:
           fi
           echo " Mutation score OK"
 
-      # Rickroll si build FAIL
-      - name: Rickroll on failure
+            - name: Rickroll on failure
         if: failure()
         run: |
-          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
-### You got rickrolled!
-[Never Gonna Give You Up (YouTube)](https://youtu.be/dQw4w9WgXcQ)
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
+          ### 😅 You got rickrolled!
 
-![Rickroll](https://media.giphy.com/media/Vuw9m5wXviFIQ/giphy.gif)
+          [Never Gonna Give You Up (YouTube)](https://youtu.be/dQw4w9WgXcQ)
+
+          ![Rickroll](https://media.giphy.com/media/Vuw9m5wXviFIQ/giphy.gif)
 EOF
+
 
