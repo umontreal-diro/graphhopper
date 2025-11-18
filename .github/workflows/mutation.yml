@@ -24,7 +24,10 @@ jobs:
       - name: Run PIT mutation testing (core module only)
         run: |
           mvn -B clean install -DskipTests
-          mvn -B -pl core org.pitest:pitest-maven:mutationCoverage -DargLine=""
+          mvn -B -pl core org.pitest:pitest-maven:mutationCoverage \
+            -DargLine="" \
+            -Dpitest.junit5PluginVersion=0.15
+
 
       - name: Extract current PIT score
         id: current
