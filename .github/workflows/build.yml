@@ -34,5 +34,8 @@ jobs:
 
       - name: Rickroll if tests fail
         if: failure()
-        uses: TheDoctor0/Random-Rickroll@v2
+        run: |
+          echo " Never gonna give you up! "
+          echo "Tests FAILED. You have been rickrolled "
+          echo "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
