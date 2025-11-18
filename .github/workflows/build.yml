@@ -49,16 +49,20 @@ jobs:
           BASELINE=$(cat mutation_baseline.txt)
           echo "Baseline: $BASELINE"
           echo "Current: ${{ env.mutation_score }}"
-
           if [ ${{ env.mutation_score }} -lt $BASELINE ]; then
             echo " Mutation score decreased!"
             exit 1
           fi
-
           echo " Mutation score OK"
 
-      # Rickroll si build FAILED
+      # Rickroll si build FAIL
       - name: Rickroll on failure
         if: failure()
-        uses: docker://ghcr.io/kerwanp/random-rickroll:latest
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+### You got rickrolled!
+[Never Gonna Give You Up (YouTube)](https://youtu.be/dQw4w9WgXcQ)
+
+![Rickroll](https://media.giphy.com/media/Vuw9m5wXviFIQ/giphy.gif)
+EOF
 
