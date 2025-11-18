@@ -21,8 +21,7 @@ jobs:
       - name: Build and run tests
         run: mvn -B clean test
 
-      - name: Run PIT mutation testing (core module 
-only)
+      - name: Run PIT mutation testing (core module only)
         run: |
           mvn -B clean install -DskipTests
           mvn -B -pl core 
