@@ -4,10 +4,11 @@ on: push
 jobs:
   build:
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix:
-        java-version: [ 25, 26-ea ]
+        java-version: [ 24, 25-ea ]
 
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +18,7 @@ jobs:
           java-version: ${{ matrix.java-version }}
           distribution: temurin
 
+      # Cache Maven
       - name: Cache Maven artifacts
         uses: actions/cache@v4
         with:
@@ -25,30 +27,39 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Cache node
-        uses: actions/cache@v4
-        with:
-          path: web-bundle/node
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os}}-node-
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: web-bundle/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml', 
-'**/package.json') }}
-          restore-keys: |
-            ${{ runner.os}}-node_modules-
-
-      - name: Build ${{ matrix.java-version }}
+      # Build classique
+      - name: Run Build & Tests
         run: mvn -B clean test
 
-      - name: Run tests
-        run: mvn -B verify
+      # Mutation Testing
+      - name: Run PIT Mutation Testing
+        run: mvn -B org.pitest:pitest-maven:mutationCoverage
 
-      - name: Rickroll on test failure
+      # Extraction du score
+      - name: Extract mutation score
+        run: |
+          REPORT_DIR=$(find target/pit-reports -maxdepth 1 -type d | tail -1)
+          SCORE=$(grep -oP 'Mutation Coverage.*?\K[0-9]+' $REPORT_DIR/index.html | 
+head -1)
+          echo "mutation_score=$SCORE" >> $GITHUB_ENV
+          echo "Mutation score detected: $SCORE"
+
+      # Comparaison avec baseline
+      - name: Compare score with baseline
+        run: |
+          BASELINE=$(cat mutation_baseline.txt)
+          echo "Baseline: $BASELINE"
+          echo "Current: ${{ env.mutation_score }}"
+
+          if [ ${{ env.mutation_score }} -lt $BASELINE ]; then
+            echo " Mutation score decreased!"
+            exit 1
+          fi
+
+          echo " Mutation score OK"
+
+      # Rickroll si build FAILED
+      - name: Rickroll on failure
         if: failure()
-        uses: TejasvOnly/random-rickroll@main
+        uses: docker://ghcr.io/kerwanp/random-rickroll:latest
 
