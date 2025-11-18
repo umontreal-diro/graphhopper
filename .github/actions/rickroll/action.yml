@@ -1,12 +1,8 @@
-name: "Rickroll"
-description: "Rickroll triggered when the build fails"
-
+kname: Rickroll
 runs:
-  using: "composite"
+  using: composite
   steps:
-    - name: Never Gonna Give You Up 🎵
-      shell: bash
-      run: |
-        echo " Le build a échoué !"
-        echo "Mais voici un peu de motivation..."
+    - run: |
+        echo " Never gonna give you up"
         echo "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      shell: bash
