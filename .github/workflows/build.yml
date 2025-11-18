@@ -39,8 +39,7 @@ jobs:
       - name: Extract mutation score
         run: |
           REPORT_DIR=$(find target/pit-reports -maxdepth 1 -type d | tail -1)
-          SCORE=$(grep -oP 'Mutation Coverage.*?\K[0-9]+' $REPORT_DIR/index.html | 
-head -1)
+          SCORE=$(grep -oP 'Mutation Coverage.*?\K[0-9]+' $REPORT_DIR/index.html | head -1)
           echo "mutation_score=$SCORE" >> $GITHUB_ENV
           echo "Mutation score detected: $SCORE"
 
