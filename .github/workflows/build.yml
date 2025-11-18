@@ -36,4 +36,11 @@ jobs:
             ${{ runner.os}}-node_modules-
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
+      - name: Run tests
+        run: mvn -B verify
+
+      - name: Rickroll if tests fail
+        if: failure()
+        uses: TheDoctor0/Random-Rickroll@v2
+
 
