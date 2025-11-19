@@ -194,6 +194,7 @@
                         <param>com.graphhopper.util.AngleCalcTest</param>
                         <param>com.graphhopper.util.ArrayUtilTest</param>
                         <param>com.graphhopper.util.BitUtilTest</param>
+                        <param>com.graphhopper.util.MutationFailTest</param>
                     </targetTests>
                     <mutators>
                         <mutator>STRONGER</mutator>
