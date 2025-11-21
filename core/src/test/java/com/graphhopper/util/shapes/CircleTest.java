@@ -17,17 +17,26 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Peter Karich
  */
+@ExtendWith(MockitoExtension.class)
 public class CircleTest {
+
+    @Mock
+    private DistanceCalc mockDistanceCalc;
 
     @Test
     public void testIntersectCircleBBox() {
@@ -81,5 +90,24 @@ public class CircleTest {
         Circle c = new Circle(10, 10, 120000);
         assertTrue(c.contains(new Circle(9.9, 10.2, 90000)));
         assertFalse(c.contains(new Circle(10, 10.4, 90000)));
+    }
+
+    @Test
+    public void testContainsAvecMockDistanceCalc() {
+        when(mockDistanceCalc.calcNormalizedDist(1000.0)).thenReturn(0.0001);
+        when(mockDistanceCalc.createBBox(48.8566, 2.3522, 1000.0))
+                .thenReturn(new BBox(2.3400, 2.3644, 48.8477, 48.8655));
+        
+        Circle circle = new Circle(48.8566, 2.3522, 1000.0, mockDistanceCalc);
+        
+        double testLat = 48.8600;
+        double testLon = 2.3600;
+        double normalizedDist = 0.00005;
+        
+        when(mockDistanceCalc.calcNormalizedDist(48.8566, 2.3522, testLat, testLon))
+                .thenReturn(normalizedDist);
+
+        assertTrue(circle.contains(testLat, testLon));
+        verify(mockDistanceCalc).calcNormalizedDist(48.8566, 2.3522, testLat, testLon);
     }
 }

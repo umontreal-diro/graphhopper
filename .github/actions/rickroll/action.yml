@@ -1,0 +1,27 @@
+name: "GraphHopper Rickroll "
+description: "A Rickroll GitHub Action for GraphHopper"
+author: "Marina et Fatou"
+inputs:
+  reason:
+    description: "The reason for the Rickroll"
+    required: false
+    default: "the tests did not pass"
+
+runs: 
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        echo " "
+        echo "==============================================="
+        echo " You've been Rickrolled!"
+        echo "==============================================="
+        echo "${{ inputs.reason }}"
+        echo " Never gonna give you up,"
+        echo " Never gonna let you down,"
+        echo " Never gonna run around and desert you."
+        echo " Never gonna make you cry,"
+        echo""
+        echo "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        echo "==============================================="
+        echo " "

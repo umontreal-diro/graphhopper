@@ -18,6 +18,8 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.BBox;
+import net.datafaker.Faker;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -331,4 +333,102 @@ public class DistanceCalcEarthTest {
         assertEquals(67.5, point.getLat(), 1e-1);
         assertEquals(90, point.getLon(), 1e-5);
     }
+    
+
+    @Test
+    public void testCreateBBox() {
+        DistanceCalcEarth dc = new DistanceCalcEarth();
+
+        // cas 1 (rayon valide, coherence des données)
+        double lat = 13.5;
+        double lon = 2.1;
+        double radius = 1500;
+
+        BBox bbox = dc.createBBox(lat, lon, radius);
+
+        double dLon = 360 / (dc.calcCircumference(lat) / radius);
+        double dLat = 360 / (DistanceCalcEarth.C / radius);
+
+        assertEquals(lon - dLon, bbox.minLon);
+        assertEquals(lon + dLon, bbox.maxLon);
+        assertEquals(lat - dLat, bbox.minLat);
+        assertEquals(lat + dLat, bbox.maxLat);
+
+        // cas 2 (rayon invalide)
+        double invalidRadius = 0;
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> dc.createBBox(lat, lon, invalidRadius)
+        );
+
+        double invalidRadius2 = -1;
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> dc.createBBox(lat, lon, invalidRadius2)
+        );
+    }
+
+
+    @Test
+    public void testIsDateLineCrossOver() {
+        DistanceCalcEarth dist = new DistanceCalcEarth();
+        assertTrue(dist.isDateLineCrossOver(179, -170));
+        assertFalse(dist.isDateLineCrossOver(2, -0.1));
+        assertFalse(dist.isDateLineCrossOver(139, 139));
+    }
+
+    @Test
+    public void testProjectCoordinates() {
+        DistanceCalcEarth calc = new DistanceCalcEarth();
+
+        // cas 1 verification de l'objet attendu 
+        GHPoint result = calc.projectCoordinate(10, 20, 1000, 45);
+        assertNotNull(result, "The method should return a GHPoint object");
+
+        // cas 2 
+        GHPoint start = new GHPoint(10, 20);
+        GHPoint same = calc.projectCoordinate(start.getLat(), start.getLon(), 0, 90);
+        assertEquals(start.getLat(), same.getLat(), 1e-9);
+        assertEquals(start.getLon(), same.getLon(), 1e-9);
+
+        // cas 3 
+        GHPoint moved = calc.projectCoordinate(start.getLat(), start.getLon(), 1000, 90);
+        boolean changed = start.getLat() != moved.getLat() || start.getLon() != moved.getLon();
+        assertTrue(changed, "Coordinates should change when distance > 0");
+
+        // cas 4 test de changement de longitude et latitude par rapport a l'angle 
+        double lat = 0.0;
+        double lon = 0.0;
+        double distance = 1000;
+
+        GHPoint north = calc.projectCoordinate(lat, lon, distance, 0); // direction nord 
+        assertTrue(north.getLat() > lat);
+        assertEquals(lon, north.getLon(), 1e-6);
+
+        GHPoint south = calc.projectCoordinate(lat, lon, distance, 180); // direction sud 
+        assertTrue(south.getLat() < lat);
+        assertEquals(lon, south.getLon(), 1e-6);
+
+        GHPoint east = calc.projectCoordinate(lat, lon, distance, 90); // direction est 
+        assertTrue(east.getLon() > lon);
+        assertEquals(lat, east.getLat(), 1e-6);
+
+        GHPoint west = calc.projectCoordinate(lat, lon, distance, 270); // direction
+        assertTrue(west.getLon() < lon);
+        assertEquals(lat, west.getLat(), 1e-6);
+    }
+
+    @Test
+    public void testIsDateLineCrossOverWithFaker() {
+        Faker faker = new Faker();
+        DistanceCalcEarth dist = new DistanceCalcEarth();
+
+        double lon1 = faker.number().numberBetween(-180, 180);
+        double lon2 = faker.number().numberBetween(-180, 180);
+
+        boolean expected = Math.abs(lon1 - lon2) > 180;
+        assertEquals(expected, dist.isDateLineCrossOver(lon1, lon2));
+    }
+        
+
 }

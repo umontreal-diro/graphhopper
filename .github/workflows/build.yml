@@ -37,3 +37,58 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
 
+      - name: Récupération de l'ancien baseline (silencieux)
+        if: matrix.java-version == '24'
+        continue-on-error: true
+        run: |
+          echo "Téléchargement du baseline précédent..."
+          gh run download --name mutation-baseline || echo "Aucun baseline trouvé."
+
+          # Si aucun fichier n'a été téléchargé, on initialise à 0
+          if [ ! -f mutation_baseline.txt ]; then
+            echo "0" > mutation_baseline.txt
+            echo "Baseline initial créé (0)."
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Check mutation score
+        if: matrix.java-version == '24'
+        run: |
+          mvn -q -DskipTests install
+
+          mvn -q org.pitest:pitest-maven:mutationCoverage -pl core
+
+          PREVIOUS=$(cat mutation_baseline.txt 2>/dev/null || echo "0")
+
+          CURRENT=$(sed -n '/<tbody>/,/<\/tbody>/p' core/target/pit-reports/index.html 2>/dev/null | grep -oE '<td>[0-9]+%' | sed -n '2p' | sed 's/<td>\([0-9]*\)%/\1/' || echo "0")
+          CURRENT=${CURRENT:-0}
+
+          echo "Previous: $PREVIOUS, Current: $CURRENT"
+
+          if [ "$CURRENT" -lt "$PREVIOUS" ]; then
+            echo "Mutation score decreased from $PREVIOUS to $CURRENT"
+            exit 1
+          fi
+
+          echo "$CURRENT" > mutation_baseline.txt
+
+      - name: Upload mutation baseline
+        if: matrix.java-version == '24' && success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-baseline
+          path: mutation_baseline.txt
+          retention-days: 30
+
+  rickroll-on-failure:
+    runs-on: ubuntu-latest
+    needs: build
+    if: failure()
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@v4
+    - name: Rickroll on tests
+      uses: ./.github/actions/rickroll
+      with:
+        reason: "The tests have failed in the build job."

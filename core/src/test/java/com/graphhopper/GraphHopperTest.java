@@ -2877,4 +2877,50 @@ public class GraphHopperTest {
         assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
     }
 
+    /*
+    @Test
+    public void testImportOrLoad() {
+        // cas 1: graphe déjà existant
+        TestableGraphHopper hopper1 = new TestableGraphHopper(true);
+        GraphHopper result1 = hopper1.importOrLoad();
+        // tests
+        assertTrue(hopper1.loadCalled);
+        assertFalse(hopper1.processedCalled);
+        assertSame(hopper1, result1);
+
+        // cas 2 : graphe n'existe pas
+        TestableGraphHopper hopper2 = new TestableGraphHopper(false);
+        GraphHopper result2 = hopper2.importOrLoad();
+        // tests
+        assertTrue(hopper2.loadCalled);
+        assertTrue(hopper2.processedCalled);
+        assertSame(hopper2, result2);
+
+        // cas du chemin invalide
+        GraphHopper hopper3 = new GraphHopper();
+        hopper3.setGraphHopperLocation("cheminInvalide/@#fFCFV");
+        assertThrows(RuntimeException.class, hopper3::importOrLoad);
+    }
+
+    static class TestableGraphHopper extends GraphHopper {
+        boolean loadCalled = false;
+        boolean processedCalled = false;
+        boolean loadResult;
+
+        TestableGraphHopper(boolean loadResult) {
+            this.loadResult = loadResult;
+        }
+
+        @Override
+        public boolean load() {
+            loadCalled = true;
+            return loadResult;
+        }
+
+        @Override
+        protected void process(boolean closeEarly) {
+            processedCalled = true;
+        }
+    }
+    */
 }
