@@ -1,0 +1,13 @@
+name: Rickroll
+description: Drop a cheeky rickroll in the job summary on failure
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+### 😅 You got rickrolled!
+[Never Gonna Give You Up (YouTube)](https://youtu.be/dQw4w9WgXcQ)
+
+![Rickroll](https://media.giphy.com/media/Vuw9m5wXviFIQ/giphy.gif)
+EOF
