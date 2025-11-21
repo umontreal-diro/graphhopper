@@ -164,6 +164,27 @@
                     <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.20.2</version>
+                <configuration>
+                    <targetClasses>
+                        <param>com.graphhopper.util.GHUtility</param>
+                        <param>com.graphhopper.util.ArrayUtil</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>com.graphhopper.util.GHUtilityTest</param>
+                        <param>com.graphhopper.util.ArrayUtilTest</param>
+                    </targetTests>
+                    <mutationThreshold>0</mutationThreshold>
+                    <outputFormats>
+                        <param>HTML</param>
+                        <param>XML</param>
+                    </outputFormats>
+                    <threads>4</threads>
+                </configuration>
+            </plugin>
         </plugins>
 
         <!-- make version available at runtime via version file -->

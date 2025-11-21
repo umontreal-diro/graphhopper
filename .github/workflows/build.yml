@@ -37,3 +37,124 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
 
+      - name: Rick Roll On Fail
+        if: failure()
+        run: |
+            echo "![RickRoll](https://media.giphy.com/media/Vuw9m5wXviFIQ/giphy.gif)"
+            cat .github/workflows/rickroll.txt
+          
+
+      # Build complet du projet sans exécuter les tests
+      # On compile tous les modules Maven (-DskipTests) sans lancer les tests.
+      - name: build tous les modules
+        run: mvn clean install -DskipTests
+
+
+
+      # Télécharger l'ancien score de mutation du module 'core'
+      # On télécharge l'artefact du précédent pipeline afin de récupérer
+      # le score de mutation précédent (Prec_Score). Cela permet de comparer
+      # le nouveau score avec l’ancien.
+      #
+      # workflow_search: true → cherche dans les workflows précédents
+      # workflow_conclusion: success → seulement les workflows réussis
+      # continue-on-error: true → évite les erreurs lors du tout premier run,
+      # où aucun artefact n’existe encore.
+      - name: Download core-artefact
+        id: download-core-artifact
+        uses: dawidd6/action-download-artifact@v11
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          workflow: build.yml
+          workflow_search: true
+          workflow_conclusion: success
+          name: core-artefact-${{ matrix.java-version }}
+          path: core-artefact/
+        continue-on-error: true
+
+      # Exécuter PIT Mutation Testing sur le module 'core'
+      # On génère le rapport PIT pour le module core.
+      # On extrait le pourcentage des mutations "Killed" (score PIT).
+      # On compare le score actuel avec le score stocké dans l’artefact
+      # précédent.
+      # Si le score a baissé -> échec du workflow (exit 1).
+      #
+      # Le fichier "Prec_Score" est mis à jour.
+      - name: Run pitest on core module
+        run: |
+          mvn clean test-compile -pl core org.pitest:pitest-maven:mutationCoverage | tee core/core-score
+
+          Core_Score=$(grep -A15 Statistics core/core-score | grep Killed | grep -oP '\(\K[0-9]+')
+          echo "le score de mutation pour le module core est $Core_Score%" 
+
+          if [ -f core-artefact/Prec_Score ]; then
+            Prev_Score=$(cat core-artefact/Prec_Score)
+          else
+            Prev_Score=0
+          fi
+
+          if [ "$Core_Score" -lt "$Prev_Score" ]; then
+            echo "Le score de mutation dans le module core a baisse $Prev_Score% ---> $Core_Score%"
+            exit 1
+          fi
+          echo "ancien score: $Prev_Score%, nouveau_score: $Core_Score%"
+          echo "$Core_Score" > ./Prec_Score
+
+
+
+      # Upload du nouveau score PIT pour le module core
+      # Cela permet d’utiliser ce score lors du prochain pipeline.
+      - name: 'Upload precedent core-score'
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-artefact-${{ matrix.java-version }}
+          path: ./Prec_Score
+
+
+
+      # Télécharger l’ancien score du module reader-gtfs
+      - name: Download reader-artefact
+        id: download-reader-artifact
+        uses: dawidd6/action-download-artifact@v11
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          workflow: build.yml
+          workflow_search: true
+          workflow_conclusion: success
+          name: reader-artefact-${{ matrix.java-version }}
+          path: reader-artefact/
+        continue-on-error: true
+
+
+
+      # Exécuter PIT sur le module reader-gtfs
+      - name: Run pitest on reader-gtfs module
+        run: |
+          mvn clean test-compile -pl reader-gtfs org.pitest:pitest-maven:mutationCoverage | tee reader-gtfs/reader-score
+
+          Reader_Score=$(grep -A15 Statistics reader-gtfs/reader-score | grep Killed | grep -oP '\(\K[0-9]+')
+          echo "le score de mutation pour le module reader-gtfs est $Reader_Score%"
+
+          if [ -f reader-artefact/Prec_Score_gtfs ]; then
+            Prev_Score=$(cat reader-artefact/Prec_Score_gtfs)
+          else
+            Prev_Score=0
+          fi
+
+          if [ "$Reader_Score" -lt "$Prev_Score" ]; then
+            echo "Le score de mutation dans le module core a baisse $Prev_Score% ---> $Reader_Score%"
+            exit 1
+          fi
+          
+          echo "ancien score: $Prev_Score%, nouveau_score: $Reader_Score%"
+          echo "$Reader_Score" > ./Prec_Score_gtfs
+
+
+      # Upload du nouveau score PIT reader-gtfs
+      - name: 'Upload preccedent reader-score'
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-artefact-${{ matrix.java-version }}
+          path: ./Prec_Score_gtfs
+
+

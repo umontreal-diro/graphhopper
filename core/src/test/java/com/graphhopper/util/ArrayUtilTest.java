@@ -21,10 +21,13 @@ package com.graphhopper.util;
 import com.carrotsearch.hppc.IntArrayList;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import static com.carrotsearch.hppc.IntArrayList.from;
+import static com.graphhopper.util.ArrayUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ArrayUtilTest {
@@ -178,4 +181,111 @@ class ArrayUtilTest {
         int[] b = {3, 7, 9, 10, 11, 12, 15, 20, 21, 26};
         assertEquals(from(2, 3, 6, 7, 8, 9, 10, 11, 12, 15, 20, 21, 26), from(ArrayUtil.merge(a, b)));
     }
+
+
+
+
+    /**
+     * TestSublist0
+     * Vérifie qu'une liste vide n a pas de sous liste.
+     * tentative d’extraction d’une sous liste de la liste vide.
+     * une erreur est attendue.
+     */
+    @Test
+    public void TestSublist0() {
+        int[] a = {};
+        IntArrayList aj = IntArrayList.from(a);
+        assertThrows(Error.class, () -> subList(aj, 3, 5));
+
+    }
+
+    /**
+     * TestSublist1
+     * Vérifie que le tableau retournee est correct.
+     * tentative d’extraction d’une sous liste d'une liste donnee
+     *  le tableau b1 est attendu
+     */
+    @Test
+    public void TestSublist1() {
+        int[] a = {1,2,3,4,5,6,7,8,9,10};
+        int[] b = {4,5};
+        IntArrayList a1 = IntArrayList.from(a);
+        IntArrayList b1 = IntArrayList.from(b);
+        assertEquals(b1, subList(a1, 3, 5));
+    }
+
+
+    /**
+     * TestSublist2
+     * Vérifie que le tableau retournee est correct.
+     * tentative d’extraction d’une sous liste etant donne que fromIndex et toIndex sont egaux
+     *  le tableau b1 est attendu
+     */
+    @Test
+    public void TestSublist2() {
+        int[] a = {1,2,3,4,5,6,7,8,9,10};
+        int[] b = {};
+        IntArrayList a1 = IntArrayList.from(a);
+        IntArrayList b1 = IntArrayList.from(b);
+        assertEquals(b1, subList(a1, 0, 0));
+    }
+
+    /**
+     * testApplyOrder2
+     * Vérifie si le tableau (order)passe en argument est plus grand que le premier tableau (a) une exeption est levee.
+     * un IllegalArgumentException est attendue.
+     */
+    @Test
+    public void testApplyOrder2() {
+        int[] a = {1,2,3,4,5,6,7,8,9,10};
+        int[] b = {1,2,3,4,5,6,7,8,9,10,11};
+        assertThrows(IllegalArgumentException.class, () -> applyOrder(a, b));
+    }
+
+
+    /**
+     * calcSortOrder2
+     * Vérifie si le parametre (length)passe en argument est plus grand que la taille des tableaux une exeption est levee.
+     * un IllegalArgumentException est attendue.
+     */
+    @Test
+    public void testCalcSortOrder2(){
+        int[] a = {1,2,3,4,5,6,7,8,9,10};
+        int[] b = {12,42,387,41,45,69,71,58,98,10};
+        assertThrows(IllegalArgumentException.class, () -> calcSortOrder(a, b, 11));
+
+    }
+
+
+    /**
+     * calcSortOrder3
+     * Vérifie que si les deux tableaux sont de tailles inegales une exeption est levee.
+     * un IllegalArgumentException est attendue.
+     */
+    @Test
+    public void testCalcSortOrder3(){
+        int[] a = {1,2,3,4,5,6,7,8,9,10,11};
+        int[] b = {12,42,387,41,45,69,71,58,98,10};
+        IntArrayList a1 = IntArrayList.from(a);
+        IntArrayList b1 = IntArrayList.from(b);
+        assertThrows(IllegalArgumentException.class, () -> calcSortOrder(a1, b1));
+
+    }
+
+
+
+    /**
+     * TestremoveConsecutiveDuplicates
+     * Vérifie que end est inferieur a zero, une exeption est levee.
+     * un IllegalArgumentException est attendue.
+     */
+    @Test
+    public void TestremoveConsecutiveDuplicates(){
+        int[] a = {1,2,3,4,5,6,7,8,9,10};
+        int b = -1;
+        assertThrows(IllegalArgumentException.class, () -> ArrayUtil.removeConsecutiveDuplicates(a, b));
+
+    }
+
+
 }

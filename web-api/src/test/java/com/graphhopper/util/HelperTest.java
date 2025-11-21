@@ -18,17 +18,71 @@
 package com.graphhopper.util;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Locale;
 
 import static com.graphhopper.util.Helper.UTF_CS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static com.graphhopper.util.Helper.removeDir;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Peter Karich
  */
+@ExtendWith(MockitoExtension.class)
 public class HelperTest {
+
+    @InjectMocks
+    Helper helper;
+    @Mock
+    File directory;
+    @Mock
+    File f1;
+    @Mock
+    File f2;
+    @Mock
+    File f3;
+
+
+    /**
+     * testRemoveDirectory
+     * Verifie que removeDir supprime correctement un repertoire contenant plusieurs fichiers.
+     * Données choisies :
+     * - Répertoire simule contenant trois fichiers (f1, f2, f3).
+     * - Chaque fichier existe et peut être supprime (delete() = true).
+     * - Le repertoire lui-même existe et peut etre supprimé.
+     * Resultat attendu :
+     * - removeDir(directory) retourne true puisque tous les fichiers et le repertoire
+     *   sont supprimes avec succes.
+     */
+    @Test
+    public void testRemoveDirectory() {
+        when(f1.exists()).thenReturn(true);
+        when(f1.delete()).thenReturn(true);
+
+        when(f2.exists()).thenReturn(true);
+        when(f2.delete()).thenReturn(true);
+
+        when(f3.exists()).thenReturn(true);
+        when(f3.delete()).thenReturn(true);
+
+        when(directory.exists()).thenReturn(true);
+        when(directory.delete()).thenReturn(true);
+
+        File[] list = {f1, f2, f3};
+
+        when(directory.isDirectory()).thenReturn(true);
+        when(directory.listFiles()).thenReturn(list);
+
+        assertTrue(removeDir(directory));
+    }
 
     @Test
     public void testElevation() {

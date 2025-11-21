@@ -2,3 +2,4 @@ from_stop_id,to_stop_id,from_route_id,to_route_id,transfer_type,min_transfer_tim
 BEATTY_AIRPORT,BEATTY_AIRPORT,,,2,660
 BEATTY_AIRPORT,BEATTY_AIRPORT,,AB,2,0
 BEATTY_AIRPORT,BEATTY_AIRPORT,AB,,2,1200
+BULLFROG,BULLFROG,AB,,1,100

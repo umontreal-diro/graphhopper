@@ -81,6 +81,9 @@ public class PMapTest {
     public void empty() {
         assertTrue(new PMap("").toMap().isEmpty());
         assertTrue(new PMap("name").toMap().isEmpty());
+
+        // creating an invalid test to rick roll ;)
+        assertFalse(new PMap("name").toMap().isEmpty());
     }
 
 }
