@@ -35,5 +35,69 @@ jobs:
           restore-keys: |
             ${{ runner.os}}-node_modules-
       - name: Build ${{ matrix.java-version }}
-        run: mvn -B clean test
+        run: mvn -B clean install -DskipTests
+
+      - name: Run tests
+        run: mvn -B test
+
+      - name: Rickroll on test failure
+        if: failure()
+        run: |
+          echo "Never gonna give you up"
+          echo "Never gonna let you down"
+          echo "Never gonna run around and desert you"
+          echo "Never gonna make you cry"
+          echo "Never gonna say goodbye"
+          echo "Never gonna tell a lie and hurt you"
+          echo ""
+          echo "Watch: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+      - name: Run PIT mutation testing
+        if: matrix.java-version == 24
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core
+
+      - name: Extract mutation score
+        if: matrix.java-version == 24
+        run: |
+          MUTATION_SCORE=$(grep -oP '<td>Line Coverage</td><td>\K[0-9]+' core/target/pit-reports/*/index.html | head -1)
+          echo "CURRENT_SCORE=$MUTATION_SCORE" >> $GITHUB_ENV
+          echo "Current mutation score: $MUTATION_SCORE%"
+
+      - name: Download previous mutation score
+        if: matrix.java-version == 24
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: mutation-score
+          path: .
+
+      - name: Compare mutation scores
+        if: matrix.java-version == 24
+        run: |
+          if [ -f mutation_score.txt ]; then
+            PREVIOUS_SCORE=$(cat mutation_score.txt)
+            echo "Previous mutation score: $PREVIOUS_SCORE%"
+            echo "Current mutation score: $CURRENT_SCORE%"
+
+            if [ "$CURRENT_SCORE" -lt "$PREVIOUS_SCORE" ]; then
+              echo "Mutation score decreased from $PREVIOUS_SCORE% to $CURRENT_SCORE%"
+              exit 1
+            else
+              echo "Mutation score maintained or improved"
+            fi
+          else
+            echo "No previous score found, saving current score as baseline"
+          fi
+
+      - name: Save mutation score
+        if: matrix.java-version == 24 && success()
+        run: |
+          echo "$CURRENT_SCORE" > mutation_score.txt
+
+      - name: Upload mutation score
+        if: matrix.java-version == 24 && success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-score
+          path: mutation_score.txt
 
