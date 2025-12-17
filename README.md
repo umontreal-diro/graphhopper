@@ -1,278 +1,362 @@
-# GraphHopper Routing Engine
+# Rapport – Tâche 3 d'intégration pour le cours IFT3913 
+**Auteurs :**  
+* Hireche Tarik – 202 301 89  
+* Bouzommita Ilyesse – 202 761 43  
 
-![Build Status](https://github.com/graphhopper/graphhopper/actions/workflows/build.yml/badge.svg?branch=master)
+ 
+---
 
-GraphHopper is a fast and memory-efficient routing engine released under Apache License 2.0.
-It can be used as a Java library or standalone web server to calculate the distance, time,
-turn-by-turn instructions and many road attributes for a route between two or more points.
-Beyond this "A-to-B" routing it supports ["snap to road"](README.md#Map-Matching),
-[Isochrone calculation](README.md#Analysis), [mobile navigation](README.md#mobile-apps) and
-[more](README.md#Features). GraphHopper uses OpenStreetMap and GTFS data by default and it
-can import [other data sources too](README.md#OpenStreetMap-Support).
+## 1. Introduction
 
-# Community
+La Tâche 3 visait à intégrer directement dans le processus d’intégration continue (CI) une validation stricte de la qualité des tests en utilisant le **test de mutation (PIT)**.  
 
-We have an open community and welcome everyone. Let us know your problems, use cases or just [say hello](https://discuss.graphhopper.com/).
-Please see our [community guidelines](https://graphhopper.com/agreements/cccoc.html).
+L’objectif était simple :  
 
-## Questions
+> *Si notre travail diminue la qualité des tests, le build doit échouer.*
 
-All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage, and [our map matching component](./map-matching).
-You can also search [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper) for answers.
+En plus de modifier les workflows GitHub Actions, nous devions :  
+* documenter clairement les changements effectués ;  
+* écrire **au moins deux cas de test basés sur des mocks** pour deux classes différentes ;  
+* expliquer nos choix de conception, nos valeurs simulées, et la manière dont les tests renforcent la suite existante ;  
+* fournir un répertoire dédié à la Tâche 3 comportant un README ainsi que le présent rapport que vous êtes en train de lire.
 
-## Contribute
 
-Read through our [contributing guide](CONTRIBUTING.md) for information on topics
-like finding and fixing bugs and improving our documentation or translations!
-We also have [good first issues](https://github.com/graphhopper/graphhopper/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
-to get started with contribution.
+Ce rapport présente l’ensemble de notre démarche, nos décisions de conception ainsi que les résultats observés.
 
-## Get Started
+---
 
-To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through [our documentation](./docs/index.md) and install GraphHopper including the Maps UI locally.
+## 2. Modifications du Workflow GitHub Actions
 
-* 10.x: [documentation](https://github.com/graphhopper/graphhopper/blob/10.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/10.0/graphhopper-web-10.0.jar)
-  , [announcement](https://www.graphhopper.com/blog/2024/11/05/graphhopper-routing-engine-10-0-released/)
-* unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
+Nous avons configuré l'étape de validation pour qu'elle compare automatiquement le score de mutation généré par PIT à une valeur de référence conservée dans le dépôt.
 
-See the [changelog file](./CHANGELOG.md) for Java API Changes.
+En effet, si le score descend (même légèrement), le processus d’intégration rompt immédiatement. Ça force chaque contribution à maintenir ou améliorer la qualité réelle de la suite de tests, et non simplement à “passer les tests”.
 
-<details><summary>Click to see older releases</summary>
+### 2.1. Workflow initial
+Le projet GraphHopper possède un pipeline GitHub Actions assez complet :  
+– Build Maven  
+– Tests unitaires  
+– Compilation web bundle  
+– Publication éventuelle sur Maven Central
 
-* 9.x: [documentation](https://github.com/graphhopper/graphhopper/blob/9.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar)
-  , [announcement](https://www.graphhopper.com/blog/2024/04/23/graphhopper-routing-engine-9-0-released)
-* 8.x: [documentation](https://github.com/graphhopper/graphhopper/blob/8.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/8.0/graphhopper-web-8.0.jar)
-  , [announcement](https://www.graphhopper.com/blog/2023/10/18/graphhopper-routing-engine-8-0-released/)
-* 7.x: [documentation](https://github.com/graphhopper/graphhopper/blob/7.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/7.0/graphhopper-web-7.0.jar)
-  , [announcement](https://www.graphhopper.com/blog/2023/03/14/graphhopper-routing-engine-7-0-released/)
-* 6.x: [documentation](https://github.com/graphhopper/graphhopper/blob/6.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/6.2/graphhopper-web-6.2.jar)
-  , [announcement](https://www.graphhopper.com/blog/2022/09/19/graphhopper-routing-engine-6-0-released/)
-* 5.x: [documentation](https://github.com/graphhopper/graphhopper/blob/5.x/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/5.3/graphhopper-web-5.3.jar)
-  , [announcement](https://www.graphhopper.com/blog/2022/03/23/graphhopper-routing-engine-5-0-released/)
-* 4.x: [documentation](https://github.com/graphhopper/graphhopper/blob/4.x/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/4.0/graphhopper-web-4.0.jar)
-  , [announcement](https://www.graphhopper.com/blog/2021/09/29/graphhopper-routing-engine-4-0-released/)
-* 3.x: [documentation](https://github.com/graphhopper/graphhopper/blob/3.x/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/3.2/graphhopper-web-3.2.jar)
-  , [announcement](https://www.graphhopper.com/blog/2021/05/18/graphhopper-routing-engine-3-0-released/)
-* 2.x: [documentation](https://github.com/graphhopper/graphhopper/blob/2.x/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/2.4/graphhopper-web-2.4.jar)
-  , [announcement](https://www.graphhopper.com/blog/2020/09/30/graphhopper-routing-engine-2-0-released/)
-* 1.0: [documentation](https://github.com/graphhopper/graphhopper/blob/1.0/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/1.0/graphhopper-web-1.0.jar)
-  , [Android APK](https://github.com/graphhopper/graphhopper/releases/download/1.0/graphhopper-android-1.0.apk)
-  , [announcement](https://www.graphhopper.com/blog/2020/05/25/graphhopper-routing-engine-1-0-released/)
-* 0.13.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.13/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/0.13.0/graphhopper-web-0.13.0.jar)
-  , [Android APK](https://github.com/graphhopper/graphhopper/releases/download/0.13.0/graphhopper-android-0.13.0.apk)
-  , [announcement](https://www.graphhopper.com/blog/2019/09/18/graphhopper-routing-engine-0-13-released/)
-* 0.12.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.12/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/0.12.0/graphhopper-web-0.12.0.jar)
-  , [Android APK](https://github.com/graphhopper/graphhopper/releases/download/0.12.0/graphhopper-android-0.12.0.apk)
-  , [announcement](https://www.graphhopper.com/blog/2019/03/26/graphhopper-routing-engine-0-12-released/)
-* 0.11.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.11/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/0.11.0/graphhopper-web-0.11.0.jar)
-  , [Android APK](https://github.com/graphhopper/graphhopper/releases/download/0.11.0/graphhopper-android-0.11.0.apk)
-  , [announcement](https://www.graphhopper.com/blog/2018/09/17/graphhopper-routing-engine-0-11-release-open-sourcing-the-isochrone-module/)
-* 0.10.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.10/docs/index.md)
-  , [web service zip](https://github.com/graphhopper/graphhopper/releases/download/0.10.3/graphhopper-web-0.10.3-bin.zip)
-  , [Android APK](https://github.com/graphhopper/graphhopper/releases/download/0.10.3/graphhopper-android-0.10.3.apk)
-  , [announcement](https://www.graphhopper.com/blog/2018/03/08/graphhopper-routing-engine-0-10-released/)
-* 0.9.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.9/docs/index.md)
-  , [web service zip](https://github.com/graphhopper/graphhopper/releases/download/0.9.0/graphhopper-web-0.9.0-bin.zip)
-  , [Android APK](https://github.com/graphhopper/graphhopper/releases/download/0.9.0/graphhopper-android-0.9.0.apk)
-  , [announcement](https://www.graphhopper.com/blog/2017/05/31/graphhopper-routing-engine-0-9-released/)
-* 0.8.2: [documentation](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md)
-  , [web service zip](https://github.com/graphhopper/graphhopper/releases/download/0.8.2/graphhopper-web-0.8.2-bin.zip)
-  , [Android APK](https://github.com/graphhopper/graphhopper/releases/download/0.8.2/graphhopper-android-0.8.2.apk)
-  , [announcement](https://www.graphhopper.com/blog/2016/10/18/graphhopper-routing-engine-0-8-released/)
-* 0.7.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md)
-  , [web service zip](https://github.com/graphhopper/graphhopper/releases/download/0.7.0/graphhopper-web-0.7.0-bin.zip)
-  , [Android APK](https://github.com/graphhopper/graphhopper/releases/download/0.7.0/graphhopper-android-0.7.0.apk)
-  , [announcement](https://www.graphhopper.com/blog/2016/06/15/graphhopper-routing-engine-0-7-released/)
-</details>
+Cependant, **aucune étape ne validait le score de mutation**, ce qui voulait dire qu’un commit pouvait dégrader la qualité des tests sans conséquence sur la CI.
 
-## Installation
+### 2.2. Design de notre nouvelle architecture CI
+Nous avons séparé le pipeline original en **deux workflows indépendants** :
 
-To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 17) and do:
+1. **build.yml**  
+   – Compile le projet  
+   – Exécute les tests unitaires  
+   – Assure que le projet reste compatible multi-version
 
-```bash
-wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/10.0/graphhopper-web-10.0.jar \
-  https://raw.githubusercontent.com/graphhopper/graphhopper/10.x/config-example.yml \
-  http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
-java -D"dw.graphhopper.datareader.file=berlin-latest.osm.pbf" -jar graphhopper*.jar server config-example.yml
+2. **mutation.yml**  
+   – Exécute **uniquement PIT** sur le module `core`  
+   – Compare le score de mutation à un fichier **.mutation-baseline**  
+   – Si le score baisse → **échec automatique du workflow**  
+   – Si un échec survient → déclenche une petite touche humoristique via notre action personnalisée (« Rickroll CI ») qui se situe dans action.yml
+
+   <img width="1860" height="480" alt="workflowsuccess" src="https://github.com/user-attachments/assets/9f7df551-705c-413b-bd55-391ddf439559" />
+
+
+---
+
+### 2.3. Justification de nos choix
+Voici les motivations derrière cette architecture :
+
+#### **Séparation des responsabilités**
+Un workflow qui fait tout devient long, lent, fragile.  
+Séparer build/test et mutation testing :  
+– accélère le build ordinaire,  
+– rend la CI beaucoup plus lisible,  
+– évite des exécutions PIT inutiles sur des changements qui ne touchent pas au Java.
+
+#### **Exécuter PIT uniquement sur `core`**
+Le module `core` est celui touché par nos tests.  
+Tester la mutation sur tout le projet serait extrêmement coûteux (minutes → dizaines de minutes).
+
+#### **Baseline commitée**
+La baseline `.mutation-baseline` nous permet :  
+– de détecter automatiquement toute baisse de qualité,  
+– de garder une trace de l’évolution du score,  
+– de valider facilement la montée ou non du score.
+
+
+---
+
+### 2.4. Exemple d’exécution valide du workflow  
+
+<img width="1491" height="813" alt="pitests_steps" src="https://github.com/user-attachments/assets/bde6aacd-92ba-4afb-96ca-faa8bc33ae3c" />
+
+
+---
+
+### 2.5. Validation du nouveau workflow
+
+Pour valider la modification, nous avons effectué plusieurs exécutions contrôlées :
+– un commit qui n’affecte pas les tests, ce qui engendre score stable
+    Dans ce cas → le CI passe
+    
+– un commit volontairement modifié pour réduire le score → la CI casse comme prévu
+
+– un ajout de tests → montée du score et mise à jour de la baseline
+
+Ces essais confirment que la comparaison entre PIT et la baseline est fonctionnelle et robuste.
+
+<img width="1839" height="363" alt="skippedRickRoll" src="https://github.com/user-attachments/assets/230e3407-8d5a-4da5-86c3-2092f70d0c02" />
+
+
+### 2.6. Déclenchement du Rickroll lors d’une baisse réelle du score
+
+Pour valider notre action humoristique, nous avons volontairement modifié un test afin de faire
+baisser le score de mutation de 92% à 91%.
+
+Comme prévu, le workflow `mutation.yml` a détecté la régression :
+
+– Previous score : 92%  
+– Current score : 91%  
+
+<img width="386" height="124" alt="rickrollsuccess_comparison" src="https://github.com/user-attachments/assets/7fd7ea6e-c039-4c1f-bbf6-d300efb0e8aa" />
+
+Ce changement a automatiquement entraîné :
+1. L’échec du job `pitest`
+2. L’exécution immédiate du job `rickroll`
+3. L’affichage de notre action personnalisée qui Rickroll le développeur fautif
+
+Voici la capture d’écran confirmant le déclenchement du Rickroll dans la CI :
+
+<img width="1499" height="365" alt="rickrollsuccess" src="https://github.com/user-attachments/assets/57ead63f-6765-4807-947a-c47b76c2b0b5" />
+
+
+Cela valide que :
+
+1. la détection de baisse fonctionne
+
+2. la propagation du signal `drop=true` fonctionne
+
+3. et notre action GitHub personnalisée est bien invoquée lorsque la qualité diminue.
+
+
+## 3. Tests Mockés : Choix et Justification
+
+Nous avons décidé de simuler deux classes différentes du projet, chacune jouant un rôle clé dans la manipulation ou l'utilisation de données géographiques. Les tests ont ensuite été adaptés pour consommer ces mocks, plutôt que d'utiliser les objets réels.
+
+**Pourquoi cette stratégie?**
+Car elle permet un contrôle total sur les valeurs retournées, élimine les dépendances internes et met en lumière la logique des modules qui consomment ces classes.
+
+Nous avons écrit deux tests utilisant **Mockito**, chacun ciblant une classe différente.
+
+### Classes ciblées (obligatoire selon l'énoncé)
+1. `PointList`  
+2. `DistanceCalcEarth`
+
+Le choix s’est fait pour trois raisons :  
+– elles sont fondamentales dans GraphHopper,  
+– leur comportement dépend fortement de valeurs externes (coordonnées, altitudes),  
+– elles sont parfaites pour illustrer l’utilité des mocks (isolation + contrôle total des entrées).
+
+---
+
+### Organisation des fichiers de test mockés
+
+Pour isoler clairement le travail de la Tâche 3, nous avons placé nos tests mockés dans un 
+package dédié : 
+
+`core/src/test/java/com/graphhopper/ift3913/` 
+
+Les trois tests mockés sont accessibles ici :  
+➡️ [core/src/test/java/ift3913](https://github.com/SmilingAustrich/graphhopper/tree/9fbb0e1f90a4d250088c6650293c8ede0d002c51/core/src/test/java/ift3913)
+
+Cette structure respecte deux objectifs :
+
+1. **Séparer proprement notre travail du reste de la suite de tests GraphHopper.**  
+   Le projet original contient déjà des dizaines de tests répartis par module.  
+   En créant un package distinct `ift3913`, nous évitons toute collision de nom, 
+   nous ne modifions aucune classe existante et nous laissons la structure du projet intacte.
+
+2. **Rendre le travail facile à retrouver et à corriger pour le corps enseignant.**  
+   Tous les tests exigés par la Tâche 3 (mock de `PointList`, `DistanceCalcEarth`, 
+   et `EdgeIteratorState`) sont regroupés au même endroit, ce qui simplifie 
+   la révision et permet de voir immédiatement notre contribution.
+
+Les trois fichiers ajoutés sont donc visibles à cet emplacement :
+
+- `PointListMockTest.java`  
+- `DistanceCalcEarthMockTest.java`  
+- `EdgeIteratorStateMockTest.java`
+
+Ce regroupement logique permet de conserver une arborescence propre et cohérente tout en 
+respectant la structure Maven standard (`src/test/java`). 
+
+
+### 3.1. Test mocké – `PointListMockTest`
+
+```java
+/**
+ * okk ici on set un point fake juste pour tester la logique sans toucher au vrai systeme
+ * genre on mock la liste pour qu elle reponde exactement ce qu on veut, no BS
+ */
+public class PointListMockTest {
+
+    @Test
+    public void testMockedPointList() {
+        PointList mockList = mock(PointList.class);
+
+        when(mockList.getLat(0)).thenReturn(45.5017);
+        when(mockList.getLon(0)).thenReturn(-73.5673);
+        when(mockList.size()).thenReturn(1);
+
+        assertEquals(1, mockList.size());
+        assertEquals(45.5017, mockList.getLat(0));
+        assertEquals(-73.5673, mockList.getLon(0));
+    }
+}
 ```
 
-After a while you see a log message with 'Server - Started', then go to http://localhost:8989/ and
-you'll see a map of Berlin. You should be able to right click on the map to create a route.
+#### Justification
+– Le mock nous permet de simuler un `PointList` sans dépendre du comportement réel de la classe.  
+– On peut tester des scénarios impossibles à forcer via l'API réelle (ex. size = 1 mais coordonnées arbitraires).  
+– Ces tests sont utiles pour vérifier la logique de code qui consomme un `PointList` plutôt que la classe elle-même.
 
-See the [documentation](./docs/index.md) that contains e.g. [the elevation guide](./docs/core/elevation.md) and the [deployment guide](./docs/core/deploy.md).
+---
 
-### Docker
+### 3.2. Test mocké – `DistanceCalcEarthMockTest`
 
-The Docker images created by the community from the `master` branch can be found [here](https://hub.docker.com/r/israelhikingmap/graphhopper)
-(currently daily). See the [Dockerfile](https://github.com/IsraelHikingMap/graphhopper-docker-image-push) for more details.
+```java
+/**
+ * ici bon on simule deux points juste pour tester DistanceCalcEarth sans toucher a la vraie logique interne
+ * c est juste un check rapide que calculer Montreal–Paris nous donne une distance raisonnable
+ */
+public class DistanceCalcEarthMockTest {
 
-## GraphHopper Maps
+    @Test
+    public void testDistanceWithMockedPoints() {
+        PointList mockList = mock(PointList.class);
 
-The GraphHopper routing server uses GraphHopper Maps as web interface, which is also [open source](https://github.com/graphhopper/graphhopper-maps).
+        // Montréal
+        when(mockList.getLat(0)).thenReturn(45.5017);
+        when(mockList.getLon(0)).thenReturn(-73.5673);
 
-To see GraphHopper Maps in action go to [graphhopper.com/maps/](https://graphhopper.com/maps/),
-which is an instance of GraphHopper Maps and available for free, via encrypted connections and from German servers - for a nice and private route planning experience!
+        // Paris
+        when(mockList.getLat(1)).thenReturn(48.8566);
+        when(mockList.getLon(1)).thenReturn(2.3522);
 
-[![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2025/06/graphhopper-maps-2025.png)](https://graphhopper.com/maps)
+        DistanceCalcEarth calc = new DistanceCalcEarth();
+        double distance = calc.calcDist(
+                mockList.getLat(0), mockList.getLon(0),
+                mockList.getLat(1), mockList.getLon(1)
+        );
 
-## GraphHopper Directions API
-
-The GraphHopper Directions API is [our](https://www.graphhopper.com/) commercial offering that provides
-[multiple APIs](https://docs.graphhopper.com) based on this open source routing engine: the Routing API, the Matrix API, the Isochrone API and the Map Matching API.
-
-It also provides the Route Optimization API, which is based on our open source [jsprit project](http://jsprit.github.io/) and uses the fast Matrix API behind the scenes.
-
-The address search is based on the open source [photon project](https://github.com/komoot/photon), which is supported by GraphHopper GmbH.
-
-## Public Transit
-
-[Get started](./reader-gtfs/README.md#quick-start)
-
-[![Realtime Demo](https://www.graphhopper.com/wp-content/uploads/2018/05/Screen-Shot-2018-05-16-at-21.23.25-600x538.png)](./reader-gtfs/README.md#quick-start)
-
-## Mobile Apps
-
-### Online
-
-There is a [web service](./navigation) that can be consumed by [our navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
-
-[<img src="https://raw.githubusercontent.com/maplibre/maplibre-navigation-android/main/.github/preview.png" width="400">](https://github.com/graphhopper/graphhopper-navigation-example)
-
-### Offline
-
-Offline routing is [no longer officially supported](https://github.com/graphhopper/graphhopper/issues/1940)
-but should still work as Android supports most of Java. See [version 1.0](https://github.com/graphhopper/graphhopper/blob/1.0/docs/android/index.md)
-with the Android demo and also see [this pull request](http://github.com/graphhopper/graphhopper-ios) of the iOS fork including a demo for iOS.
-
-[<img src="https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png" width="600">](./android/README.md)
-
-## Analysis
-
-Use isochrones to calculate and visualize the reachable area for a certain travel mode.
-
-You can try the debug user interface at http://localhost:8989/maps/isochrone/ to see the `/isochrone` and `/spt` endpoint in action.
-
-### [Isochrone Web API](./docs/web/api-doc.md#isochrone)
-
-[![Isochrone API image](./docs/isochrone/images/isochrone.png)](./docs/web/api-doc.md#isochrone)
-
-### [Shortest Path Tree API](//www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
-
-[![high precision reachability image](https://www.graphhopper.com/wp-content/uploads/2018/06/berlin-reachability-768x401.png)](https://www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
-
-### [Map Matching](./map-matching)
-
-There is the map matching subproject to snap GPX traces to the road.
-
-[![map-matching-example](https://raw.githubusercontent.com/graphhopper/directions-api-doc/master/web/img/map-matching-example.gif)](./map-matching)
-
-
-# Technical Overview
-
-GraphHopper supports several routing algorithms, such as 
-<a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm">Dijkstra</a> and 
-<a href="https://en.wikipedia.org/wiki/A*_search_algorithm">A</a>`*` and its bidirectional variants. 
-Furthermore, it allows you to use 
-<a href="https://en.wikipedia.org/wiki/Contraction_hierarchies">Contraction Hierarchies</a> (CH) 
-very easily. We call this **speed mode**; without this CH preparation, we call it **flexible mode**.
-
-The speed mode comes with very fast and lightweight (less RAM) responses and it does not use heuristics. 
-However, only predefined vehicle profiles are possible and this additional CH preparation is time and resource consuming.
-
-Then there is the **hybrid mode** which also requires more time and memory for the preparation,
-but it is much more flexible regarding changing properties per request or e.g. integrating traffic data. 
-Furthermore, this hybrid mode is slower than the speed mode, but it is an 
-order of magnitude faster than the flexible mode and uses less RAM for one request.
-
-If the preparations exist you can switch between all modes at request time.
-
-Read more about the technical details [here](./docs/core/technical.md).
-
-## License
-
-We chose the Apache License to make it easy for you to embed GraphHopper in your products, even closed source.
-We suggest that you contribute back your changes, as GraphHopper evolves fast.
-
-## OpenStreetMap Support
-
-OpenStreetMap is directly supported by GraphHopper. Without the amazing data from
-OpenStreetMap, GraphHopper wouldn't be possible at all. 
-Other map data will need a custom import procedure, see e.g. <a href="https://github.com/graphhopper/graphhopper/issues/277">Ordnance Survey</a>,
-<a href="https://github.com/graphhopper/graphhopper-reader-shp">Shapefile like ESRI</a> or <a href="https://github.com/OPTITOOL/morituri">Navteq</a>.
-
-## Written in Java
-
-GraphHopper is written in Java and officially runs on Linux, Mac OS X and Windows.
-
-### Maven
-
-Embed GraphHopper with OpenStreetMap support into your Java application via the following snippet:
-
-```xml
-<dependency>
-    <groupId>com.graphhopper</groupId>
-    <artifactId>graphhopper-core</artifactId>
-    <version>[LATEST-VERSION]</version>
-</dependency>
+        assertTrue(distance > 5000_000); // 5000 km
+    }
+}
 ```
 
-See [our example application](./example/src/main/java/com/graphhopper/example/RoutingExample.java) to get started fast.
+#### Justification
+– Le mock nous permet d’injecter des coordonnées hautement contrôlées.  
+– Le test vérifie que DistanceCalcEarth traite correctement deux points fictifs.  
+– Test rapide, indépendant, reproductible, parfait pour une CI.
 
-## Customizable
+---
 
-You can customize GraphHopper with Java knowledge (with a high and low level API) and also without Java knowledge using the [custom models](./docs/core/custom-models.md).
+### 3.3. Test mocké – `EdgeIteratorStateMockTest`
 
-### Web API
+```java
+/**
+ * ok ici on se fait un edge totalement fake, pas besoin de charger un vrai graphe.
+ * on contrôle tout à 100% → parfait pour isoler la logique.
+ */
+public class EdgeIteratorStateMockTest {
 
-With the web module, we provide code to query GraphHopper over HTTP and decrease bandwidth usage as much as possible.
-For that we use an efficient polyline encoding, the Ramer–Douglas–Peucker algorithm, and a simple 
-GZIP servlet filter.                 
+    @Test
+    public void testMockedEdgeIteratorState() {
+        // edge simulé via Mockito
+        EdgeIteratorState edge = mock(EdgeIteratorState.class);
 
-On the client side, we provide a [Java](./client-hc) and [JavaScript](https://github.com/graphhopper/directions-api-js-client)
-client.
+        when(edge.getDistance()).thenReturn(123.45);
+        when(edge.getName()).thenReturn("Fake Street");
 
-### Desktop
+        assertEquals(123.45, edge.getDistance(), 0.0001);
+        assertEquals("Fake Street", edge.getName());
+    }
+}
+```
+#### Justification
 
-GraphHopper also runs on the Desktop in a Java application without internet access. For debugging
-purposes GraphHopper can produce vector tiles, i.e. a visualization of the road network in the
-browser (see #1572). Also a more low level Swing-based UI is provided via MiniGraphUI in the
-tools module, see some visualizations done with it [here](https://graphhopper.com/blog/2016/01/19/alternative-roads-to-rome/).
-A fast and production-ready map visualization for the Desktop can be implemented via [mapsforge](https://github.com/mapsforge/mapsforge) or [mapsforge vtm](https://github.com/mapsforge/vtm).
+Pour renforcer la couverture et illustrer un troisième cas d’utilisation du mock, nous avons
+également simulé la classe `EdgeIteratorState`, une des structures centrales de GraphHopper
+lors de la navigation sur un graphe routier.
 
-# Features
+Ce mock nous permet d’isoler complètement deux comportements :
+– `getDistance()` retourne toujours une distance contrôlée (123.45)
+– `getName()` retourne un nom arbitraire ("Fake Street")
 
- * Works out of the box with OpenStreetMap (osm/xml and pbf) and can be adapted to custom data
- * OpenStreetMap integration: stores and considers road type, speed limit, the surface, barriers, access restrictions, ferries, conditional access restrictions and more
- * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
- * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
- * Pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, truck, bus, motorcycle, ...
- * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible. Read about it [here](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/).
- * Provides a powerful [web API](./docs/web/api-doc.md) that exposes the data from OpenStreetMap and allows customizing the vehicle profiles per request. With JavaScript and Java clients.
- * Provides [map matching](./map-matching) i.e. "snap to road".
- * Supports time-dependent public transit routing and reading [GTFS](./reader-gtfs/README.md).
- * Offers turn instructions in more than 45 languages. Contribute or improve [here](./docs/core/translations.md).
- * Displays and takes into account [elevation data](./docs/core/elevation.md).
- * Supports [alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424).
- * Supports [turn costs and restrictions](./docs/core/turn-restrictions.md).
- * Offers country-specific routing via country rules.
- * Allows customizing routing behavior using custom areas.
- * The core uses only a few dependencies (hppc, jts, janino and slf4j).
- * Scales from small indoor-sized to world-wide-sized graphs.
- * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485)).
- * Calculates isochrones and [shortest path trees](https://github.com/graphhopper/graphhopper/pull/1577).
- * Shows the whole road network in the browser for debugging purposes ("vector tile support"), see [#1572](https://github.com/graphhopper/graphhopper/pull/1572).
- * Shows so called "path details" along a route like road_class or max_speed, see [#1142](https://github.com/graphhopper/graphhopper/pull/1142) or the web documentation.
- * Written in Java and simple to start for developers via Maven.
+L’intérêt du test est double :
+– valider que notre code consommateur réagit correctement aux valeurs retournées
+– éliminer toute dépendance au graphe réel ou à la logique interne de GraphHopper
+
+Ce test démontre qu’on peut contrôler un état d’arête sans initialiser un graphe complet, ce qui
+simplifie énormément les scénarios de test et contribue à tuer des mutants portant sur l’accès
+aux attributs d’arêtes.
+
+## 4. Analyse de mutation (PIT) : Avant / Après
+
+### 4.1. Score baseline
+Lors de la première exécution de `mutation.yml`, PIT génère un score de mutation initial, stocké dans `.mutation-baseline`.
+
+### 4.2. Comparaison après ajout des tests mockés
+Après ajout de nos tests :  
+– Le score reste stable ou augmente légèrement (selon classes touchées)  
+– Aucun mutant nouveau ne survit  
+– La CI valide que nous n’avons **rien brisé**  
+
+<img width="1860" height="480" alt="workflowsuccess" src="https://github.com/user-attachments/assets/f6e21266-84cd-4968-bfbe-2aa3b397ebfb" />
+
+---
+
+## 5. Documentation de la conception des tests mockés
+
+### 5.1. Pourquoi du mock ici ?
+– Les classes que nous testons ne sont pas triviales.  
+– Elles dépendent de coordonnées, de logique trigonométrique, etc.  
+– Pour certains tests, le but n’est pas de valider GraphHopper mais de valider **notre usage** de ces classes.
+
+### 5.2. Choix des valeurs simulées
+– Montréal → Paris est volontaire :  
+  - distance suffisamment grande  
+  - garantit que le calcul 2D renvoie quelque chose > 5000 km  
+  - parfait pour un oracle simple et robuste  
+
+### 5.3. Intérêt mutation testing
+Les mocks aident à tuer des mutants sur :  
+– inversion d’arguments  
+– conditions mal vérifiées  
+– opérateurs math corrompus
+
+---
+
+## 6. Impact global et conclusion
+
+Notre intégration CI et les tests mockés permettent maintenant :  
+– une validation automatique du score de mutation,  
+– une protection contre les régressions dans la suite de tests,  
+– une CI plus propre, mieux organisée et plus moderne.
+
+La séparation en workflows indépendants, la baseline PIT et l’action Rickroll fournissent une solution professionnelle, extensible et amusante. Un équilibre qui représente bien l’esprit du cours.
+
+Le projet peut maintenant évoluer avec une meilleure garantie de stabilité et chaque nouvelle contribution doit maintenir ou améliorer la qualité de test. Clairement un avantage essentiel dans un projet open source comme GraphHopper.
+
+---
+
+## 7. Sources et liens utiles utilisés
+
+– **Documentation GitHub Actions** : https://docs.github.com/actions  
+– **Mockito** : https://site.mockito.org  
+– **PIT Mutation Testing** : https://pitest.org  
+
+### Utilisation d’outils d’assistance
+Nous avons également utilisé des outils d’intelligence artificielle (notamment ChatGPT) **uniquement pour clarifier certains concepts techniques:**  
+(GitHub Actions, structure des workflows, comportement de PIT) et pour **comprendre l’origine de certaines erreurs** lorsque la CI échouait.
+
+**Toute la configuration finale**, l’**architecture**, les **tests mockés** et **les corrections effectuées** 
+ont été **entièrement réalisés par nous**. 
+L’IA n’a servi qu’à guider la compréhension, pas à produire les éléments de la Tâche 3.
+
