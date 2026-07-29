@@ -12,22 +12,22 @@ La Tâche 3 visait à intégrer directement dans le processus d’intégration c
 
 L’objectif était simple :  
 
-> *Si notre travail diminue la qualité des tests, le build doit échouer.*
+> *Si mon travail diminue la qualité des tests, le build doit échouer.*
 
-En plus de modifier les workflows GitHub Actions, nous devions :  
+En plus de modifier les workflows GitHub Actions, je devais :  
 * documenter clairement les changements effectués ;  
 * écrire **au moins deux cas de test basés sur des mocks** pour deux classes différentes ;  
-* expliquer nos choix de conception, nos valeurs simulées, et la manière dont les tests renforcent la suite existante ;  
+* expliquer mes choix de conception, mes valeurs simulées, et la manière dont les tests renforcent la suite existante ;  
 * fournir un répertoire dédié à la Tâche 3 comportant un README ainsi que le présent rapport que vous êtes en train de lire.
 
 
-Ce rapport présente l’ensemble de notre démarche, nos décisions de conception ainsi que les résultats observés.
+Ce rapport présente l’ensemble de ma démarche, mes décisions de conception ainsi que les résultats observés.
 
 ---
 
 ## 2. Modifications du Workflow GitHub Actions
 
-Nous avons configuré l'étape de validation pour qu'elle compare automatiquement le score de mutation généré par PIT à une valeur de référence conservée dans le dépôt.
+J'ai configuré l'étape de validation pour qu'elle compare automatiquement le score de mutation généré par PIT à une valeur de référence conservée dans le dépôt.
 
 En effet, si le score descend (même légèrement), le processus d’intégration rompt immédiatement. Ça force chaque contribution à maintenir ou améliorer la qualité réelle de la suite de tests, et non simplement à “passer les tests”.
 
@@ -40,8 +40,8 @@ Le projet GraphHopper possède un pipeline GitHub Actions assez complet :
 
 Cependant, **aucune étape ne validait le score de mutation**, ce qui voulait dire qu’un commit pouvait dégrader la qualité des tests sans conséquence sur la CI.
 
-### 2.2. Design de notre nouvelle architecture CI
-Nous avons séparé le pipeline original en **deux workflows indépendants** :
+### 2.2. Design de ma nouvelle architecture CI
+J'ai séparé le pipeline original en **deux workflows indépendants** :
 
 1. **build.yml**  
    – Compile le projet  
@@ -52,14 +52,14 @@ Nous avons séparé le pipeline original en **deux workflows indépendants** :
    – Exécute **uniquement PIT** sur le module `core`  
    – Compare le score de mutation à un fichier **.mutation-baseline**  
    – Si le score baisse → **échec automatique du workflow**  
-   – Si un échec survient → déclenche une petite touche humoristique via notre action personnalisée (« Rickroll CI ») qui se situe dans action.yml
+   – Si un échec survient → déclenche une petite touche humoristique via mon action personnalisée (« Rickroll CI ») qui se situe dans action.yml
 
    <img width="1860" height="480" alt="workflowsuccess" src="https://github.com/user-attachments/assets/9f7df551-705c-413b-bd55-391ddf439559" />
 
 
 ---
 
-### 2.3. Justification de nos choix
+### 2.3. Justification de mes choix
 Voici les motivations derrière cette architecture :
 
 #### **Séparation des responsabilités**
@@ -70,11 +70,11 @@ Séparer build/test et mutation testing :
 – évite des exécutions PIT inutiles sur des changements qui ne touchent pas au Java.
 
 #### **Exécuter PIT uniquement sur `core`**
-Le module `core` est celui touché par nos tests.  
+Le module `core` est celui touché par mes tests.  
 Tester la mutation sur tout le projet serait extrêmement coûteux (minutes → dizaines de minutes).
 
 #### **Baseline commitée**
-La baseline `.mutation-baseline` nous permet :  
+La baseline `.mutation-baseline` me permet :  
 – de détecter automatiquement toute baisse de qualité,  
 – de garder une trace de l’évolution du score,  
 – de valider facilement la montée ou non du score.
@@ -91,7 +91,7 @@ La baseline `.mutation-baseline` nous permet :
 
 ### 2.5. Validation du nouveau workflow
 
-Pour valider la modification, nous avons effectué plusieurs exécutions contrôlées :
+Pour valider la modification, j'ai effectué plusieurs exécutions contrôlées :
 – un commit qui n’affecte pas les tests, ce qui engendre score stable
     Dans ce cas → le CI passe
     
@@ -106,7 +106,7 @@ Ces essais confirment que la comparaison entre PIT et la baseline est fonctionne
 
 ### 2.6. Déclenchement du Rickroll lors d’une baisse réelle du score
 
-Pour valider notre action humoristique, nous avons volontairement modifié un test afin de faire
+Pour valider mon action humoristique, j'ai volontairement modifié un test afin de faire
 baisser le score de mutation de 92% à 91%.
 
 Comme prévu, le workflow `mutation.yml` a détecté la régression :
@@ -119,7 +119,7 @@ Comme prévu, le workflow `mutation.yml` a détecté la régression :
 Ce changement a automatiquement entraîné :
 1. L’échec du job `pitest`
 2. L’exécution immédiate du job `rickroll`
-3. L’affichage de notre action personnalisée qui Rickroll le développeur fautif
+3. L’affichage de mon action personnalisée qui Rickroll le développeur fautif
 
 Voici la capture d’écran confirmant le déclenchement du Rickroll dans la CI :
 
@@ -132,17 +132,17 @@ Cela valide que :
 
 2. la propagation du signal `drop=true` fonctionne
 
-3. et notre action GitHub personnalisée est bien invoquée lorsque la qualité diminue.
+3. et mon action GitHub personnalisée est bien invoquée lorsque la qualité diminue.
 
 
 ## 3. Tests Mockés : Choix et Justification
 
-Nous avons décidé de simuler deux classes différentes du projet, chacune jouant un rôle clé dans la manipulation ou l'utilisation de données géographiques. Les tests ont ensuite été adaptés pour consommer ces mocks, plutôt que d'utiliser les objets réels.
+J'ai décidé de simuler deux classes différentes du projet, chacune jouant un rôle clé dans la manipulation ou l'utilisation de données géographiques. Les tests ont ensuite été adaptés pour consommer ces mocks, plutôt que d'utiliser les objets réels.
 
 **Pourquoi cette stratégie?**
 Car elle permet un contrôle total sur les valeurs retournées, élimine les dépendances internes et met en lumière la logique des modules qui consomment ces classes.
 
-Nous avons écrit deux tests utilisant **Mockito**, chacun ciblant une classe différente.
+J'ai écrit deux tests utilisant **Mockito**, chacun ciblant une classe différente.
 
 ### Classes ciblées (obligatoire selon l'énoncé)
 1. `PointList`  
@@ -157,7 +157,7 @@ Le choix s’est fait pour trois raisons :
 
 ### Organisation des fichiers de test mockés
 
-Pour isoler clairement le travail de la Tâche 3, nous avons placé nos tests mockés dans un 
+Pour isoler clairement le travail de la Tâche 3, j'ai placé mes tests mockés dans un 
 package dédié : 
 
 `core/src/test/java/com/graphhopper/ift3913/` 
@@ -167,15 +167,15 @@ Les trois tests mockés sont accessibles ici :
 
 Cette structure respecte deux objectifs :
 
-1. **Séparer proprement notre travail du reste de la suite de tests GraphHopper.**  
+1. **Séparer proprement mon travail du reste de la suite de tests GraphHopper.**  
    Le projet original contient déjà des dizaines de tests répartis par module.  
-   En créant un package distinct `ift3913`, nous évitons toute collision de nom, 
-   nous ne modifions aucune classe existante et nous laissons la structure du projet intacte.
+   En créant un package distinct `ift3913`, j'évite toute collision de nom, 
+   je ne modifie aucune classe existante et je laisse la structure du projet intacte.
 
 2. **Rendre le travail facile à retrouver et à corriger pour le corps enseignant.**  
    Tous les tests exigés par la Tâche 3 (mock de `PointList`, `DistanceCalcEarth`, 
    et `EdgeIteratorState`) sont regroupés au même endroit, ce qui simplifie 
-   la révision et permet de voir immédiatement notre contribution.
+   la révision et permet de voir immédiatement ma contribution.
 
 Les trois fichiers ajoutés sont donc visibles à cet emplacement :
 
@@ -212,7 +212,7 @@ public class PointListMockTest {
 ```
 
 #### Justification
-– Le mock nous permet de simuler un `PointList` sans dépendre du comportement réel de la classe.  
+– Le mock me permet de simuler un `PointList` sans dépendre du comportement réel de la classe.  
 – On peut tester des scénarios impossibles à forcer via l'API réelle (ex. size = 1 mais coordonnées arbitraires).  
 – Ces tests sont utiles pour vérifier la logique de code qui consomme un `PointList` plutôt que la classe elle-même.
 
@@ -223,7 +223,7 @@ public class PointListMockTest {
 ```java
 /**
  * ici bon on simule deux points juste pour tester DistanceCalcEarth sans toucher a la vraie logique interne
- * c est juste un check rapide que calculer Montreal–Paris nous donne une distance raisonnable
+ * c est juste un check rapide que calculer Montreal–Paris me donne une distance raisonnable
  */
 public class DistanceCalcEarthMockTest {
 
@@ -251,7 +251,7 @@ public class DistanceCalcEarthMockTest {
 ```
 
 #### Justification
-– Le mock nous permet d’injecter des coordonnées hautement contrôlées.  
+– Le mock me permet d’injecter des coordonnées hautement contrôlées.  
 – Le test vérifie que DistanceCalcEarth traite correctement deux points fictifs.  
 – Test rapide, indépendant, reproductible, parfait pour une CI.
 
@@ -281,16 +281,16 @@ public class EdgeIteratorStateMockTest {
 ```
 #### Justification
 
-Pour renforcer la couverture et illustrer un troisième cas d’utilisation du mock, nous avons
+Pour renforcer la couverture et illustrer un troisième cas d’utilisation du mock, j'ai
 également simulé la classe `EdgeIteratorState`, une des structures centrales de GraphHopper
 lors de la navigation sur un graphe routier.
 
-Ce mock nous permet d’isoler complètement deux comportements :
+Ce mock me permet d’isoler complètement deux comportements :
 – `getDistance()` retourne toujours une distance contrôlée (123.45)
 – `getName()` retourne un nom arbitraire ("Fake Street")
 
 L’intérêt du test est double :
-– valider que notre code consommateur réagit correctement aux valeurs retournées
+– valider que mon code consommateur réagit correctement aux valeurs retournées
 – éliminer toute dépendance au graphe réel ou à la logique interne de GraphHopper
 
 Ce test démontre qu’on peut contrôler un état d’arête sans initialiser un graphe complet, ce qui
@@ -303,10 +303,10 @@ aux attributs d’arêtes.
 Lors de la première exécution de `mutation.yml`, PIT génère un score de mutation initial, stocké dans `.mutation-baseline`.
 
 ### 4.2. Comparaison après ajout des tests mockés
-Après ajout de nos tests :  
+Après ajout de mes tests :  
 – Le score reste stable ou augmente légèrement (selon classes touchées)  
 – Aucun mutant nouveau ne survit  
-– La CI valide que nous n’avons **rien brisé**  
+– La CI valide que je n’ai **rien brisé**  
 
 <img width="1860" height="480" alt="workflowsuccess" src="https://github.com/user-attachments/assets/f6e21266-84cd-4968-bfbe-2aa3b397ebfb" />
 
@@ -315,9 +315,9 @@ Après ajout de nos tests :
 ## 5. Documentation de la conception des tests mockés
 
 ### 5.1. Pourquoi du mock ici ?
-– Les classes que nous testons ne sont pas triviales.  
+– Les classes que je teste ne sont pas triviales.  
 – Elles dépendent de coordonnées, de logique trigonométrique, etc.  
-– Pour certains tests, le but n’est pas de valider GraphHopper mais de valider **notre usage** de ces classes.
+– Pour certains tests, le but n’est pas de valider GraphHopper mais de valider **mon usage** de ces classes.
 
 ### 5.2. Choix des valeurs simulées
 – Montréal → Paris est volontaire :  
@@ -335,7 +335,7 @@ Les mocks aident à tuer des mutants sur :
 
 ## 6. Impact global et conclusion
 
-Notre intégration CI et les tests mockés permettent maintenant :  
+Mon intégration CI et les tests mockés permettent maintenant :  
 – une validation automatique du score de mutation,  
 – une protection contre les régressions dans la suite de tests,  
 – une CI plus propre, mieux organisée et plus moderne.
@@ -353,10 +353,10 @@ Le projet peut maintenant évoluer avec une meilleure garantie de stabilité et 
 – **PIT Mutation Testing** : https://pitest.org  
 
 ### Utilisation d’outils d’assistance
-Nous avons également utilisé des outils d’intelligence artificielle (notamment ChatGPT) **uniquement pour clarifier certains concepts techniques:**  
+J'ai également utilisé des outils d’intelligence artificielle (notamment ChatGPT) **uniquement pour clarifier certains concepts techniques:**  
 (GitHub Actions, structure des workflows, comportement de PIT) et pour **comprendre l’origine de certaines erreurs** lorsque la CI échouait.
 
 **Toute la configuration finale**, l’**architecture**, les **tests mockés** et **les corrections effectuées** 
-ont été **entièrement réalisés par nous**. 
+ont été **entièrement réalisés par moi**. 
 L’IA n’a servi qu’à guider la compréhension, pas à produire les éléments de la Tâche 3.
 
