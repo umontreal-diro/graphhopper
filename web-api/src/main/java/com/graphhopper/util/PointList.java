@@ -567,4 +567,5 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             throw new IllegalStateException("You cannot change an immutable PointList");
         }
     }
+
 }

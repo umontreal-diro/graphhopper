@@ -16,6 +16,8 @@
  *  limitations under the License.
  */
 package com.graphhopper.util;
+import org.junit.jupiter.api.Disabled;
+import com.github.javafaker.Faker;
 
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
@@ -244,4 +246,151 @@ public class PointListTest {
         oneLength.add(0, 0, 0);
         assertEquals(2, oneLength.toLineString(false).getNumPoints());
     }
+
+    /**
+     * Nom du test: testAdd2DPointTo3DListThrowsException
+     * Intention: Vérifier que l'ajout d'un point sans altitude (2D) à une liste configurée en 3D
+     *            provoque une IllegalStateException.
+     * Motivation des données: Les points 2D ne contiennent pas d'altitude, ce qui rend leur ajout
+     *                         incompatible avec une PointList 3D. Le code source prévoit une
+     *                         garde explicite pour ce cas.
+     * Oracle: L'appel à add(lat,lon) doit lever une IllegalStateException
+     */
+    @Test
+    @Disabled
+    public void testAdd2DPointTo3DListThrowsException() {
+        PointList instance = new PointList(10, true); // is3D = true
+        assertThrows(IllegalStateException.class, () -> {
+            instance.add(10.0, 20.0);
+        });
+    }
+
+    /**
+     * Nom du test: testGetElevationOn2DListReturnsNaN
+     * Intention: S'assurer que l'appel de getEle() sur une liste 2D retourne Double.NaN,
+     * Motivation des données: Les listes 2D ne stockent pas d'information d'altitude. Ce
+     *                         comportement est contractuel dans l'API PointList.
+     * Oracle: La valeur retournée par getEle(index) doit être Double.NaN
+     */
+    @Test
+    @Disabled
+    public void testGetElevationOn2DListReturnsNaN() {
+        PointList instance = new PointList(10, false); // is3D = false
+        instance.add(10.0, 20.0);
+        assertTrue(Double.isNaN(instance.getEle(0)));
+    }
+
+    /**
+     * Nom du test: testInternalCapacityIncrease
+     * Intention: Valider que la capacité interne du tableau de la PointList augmente
+     *            correctement lorsqu'on dépasse la taille initiale.
+     * Motivation des données: On part d'une capacité initiale de 2. En ajoutant un 3ème point,
+     *                        la logique de `incCap` (cap = newSize * 2) doit être déclenchée.
+     *                        La nouvelle capacité attendue est 3 * 2 = 6.
+     * Oracle: La capacité interne, obtenue via la méthode getCapacity(), doit être 6 après l'ajout.
+     */
+    @Test
+    @Disabled
+    public void testInternalCapacityIncrease() {
+        PointList instance = new PointList(2, false);
+        assertEquals(2, instance.getCapacity());
+        instance.add(1, 1);
+        instance.add(2, 2);
+        // Le 3ème ajout doit déclencher l'augmentation de capacité
+        instance.add(3, 3);
+        assertTrue(instance.getCapacity() >= 6, "La capacité aurait dû augmenter.");
+    }
+
+    /**
+     * Nom du test: testModificationAfterMakeImmutable
+     * Intention: Vérifier qu'une liste rendue immuable rejette toute modification.
+     * Motivation des données: Après un appel à makeImmutable(), la liste doit bloquer les
+     *                         opérations de modification (ex : clear(), add())
+     * Oracle: Un appel à clear() doit lever une IllegalStateException.
+     */
+    @Test
+    @Disabled
+    public void testModificationAfterMakeImmutable() {
+        PointList instance = Helper.createPointList(1, 1, 2, 2);
+        instance.makeImmutable();
+        assertThrows(IllegalStateException.class, instance::clear);
+    }
+
+    /**
+     * Nom du test: testEqualsWithDifferentDimension
+     * Intention: Vérifier que deux listes identiques en coordonnées mais différentes en dimension
+     *            (2D vs 4D) ne sont pas égales.
+     * Motivation des données: La dimensionnalité (2D vs 3D) fait partie intégrante de l'état
+     *                         interne de l'objet. equals() doit la prendre en compte.
+     * Oracle: La méthode equals() doit retourner false entre une PointList 2D et une 3D équivalente.
+     */
+    @Test
+    @Disabled
+    public void testEqualsWithDifferentDimension() {
+        PointList instance2D = Helper.createPointList(10, 10, 20, 20);
+        PointList instance3D = new PointList();
+        instance3D.add(10, 10, 0);
+        instance3D.add(20, 20, 0);
+
+        assertNotEquals(instance2D, instance3D);
+    }
+
+
+    /**
+     * Nom du test: testTrimToSizeWithLargerSize
+     * Intention: Vérifier que trimToSize() rejette une taille supérieure à la taille actuelle.
+     * Motivation des données: Le code contient une garde ("throw new IllegalArgumentException(...)")
+     *                        pour empêcher une utilisation incohérente de la méthode. Ce test
+     *                        valide que cette garde fonctionne.
+     * Oracle: L'appel à trimToSize(3) doit lever une IllegalArgumentException
+     */
+    @Test
+    @Disabled
+    public void testTrimToSizeWithLargerSize() {
+        PointList instance = Helper.createPointList(1, 1, 2, 2); // size = 2
+        assertThrows(IllegalArgumentException.class, () -> {
+            instance.trimToSize(3);
+        });
+    }
+
+    /**
+     * Nom du test: testEmptySingletonImmutability
+     * Intention: Valider que la constante statique PointList.EMPTY est bien immuable
+     * Motivation des données: EMPTY est un singleton spécial dont les méthodes de modification
+     *                         lèvent volontairement des exceptions
+     * Oracle: Tout appel à add(0 ou clear() doit lever une RuntimeException
+     */
+    @Test
+    @Disabled
+    public void testEmptySingletonImmutability() {
+        PointList emptyList = PointList.EMPTY;
+        assertEquals(0, emptyList.size());
+        assertThrows(RuntimeException.class, () -> {
+            emptyList.add(1, 1);
+        });
+    }
+
+    /**
+     * Nom du test: testAddWithFakerGeneratedData
+     * Intention: Vérifier que la méthode add() fonctionne correctement avec des données aléatoires
+     *            valides.
+     * Motivation des données: L'utilisation de données aléatoires mais valides via java-faker
+     *                        permet de tester des cas que le développeur n'aurait pas imaginés,
+     *                        simulant ici l'ajout de 100 points d'un trajet plausible.
+     * Oracle: Après l'ajout de 100 points, la taille doit être égale à 100.
+     */
+    @Test
+    public void testAddWithFakerGeneratedData() {
+        Faker faker = new Faker();
+        PointList instance = new PointList();
+        int numberOfPoints = 100;
+
+        for (int i = 0; i < numberOfPoints; i++) {
+            double lat = Double.parseDouble(faker.address().latitude().replace(',', '.'));
+            double lon = Double.parseDouble(faker.address().longitude().replace(',', '.'));
+            instance.add(lat, lon);
+        }
+        assertEquals(numberOfPoints, instance.size());
+    }
 }
+

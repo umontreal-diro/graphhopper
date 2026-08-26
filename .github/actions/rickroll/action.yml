@@ -1,0 +1,13 @@
+name: "Rickroll"
+description: "Rickroll quand le score de mutation baisse"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Rick time
+      shell: bash
+      run: |
+        echo ""
+        echo "🎵 Never gonna give you up 🎵"
+        echo "https://youtu.be/dQw4w9WgXcQ"
+        echo ""

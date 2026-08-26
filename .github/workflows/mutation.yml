@@ -1,0 +1,101 @@
+name: Mutation Testing
+
+on:
+  push:
+    paths:
+      - "core/**"
+      - ".github/workflows/mutation.yml"
+  pull_request:
+    paths:
+      - "core/**"
+      - ".github/workflows/mutation.yml"
+
+jobs:
+  pitest:
+    runs-on: ubuntu-latest
+
+    outputs:
+      drop: ${{ steps.compare.outputs.drop }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Build all modules first (required by Maven)
+        run: mvn -q clean install -DskipTests
+
+      - name: Run PIT on core only
+        run: |
+          cd core
+          mvn -DwithHistory org.pitest:pitest-maven:mutationCoverage
+
+      - name: Extract mutation score
+        id: extract
+        run: |
+          report=$(find core/target/pit-reports -type f -name "index.html" | head -n 1)
+          echo "Found report: $report"
+          
+          if [ -z "$report" ]; then
+            echo "score=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extraire le premier nombre suivi de %
+          score=$(grep -oP '[0-9]+(?=%)' -m1 "$report" || true)
+
+          if [ -z "$score" ]; then
+            echo "No score found in HTML"
+            echo "score=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Extracted score: $score"
+          echo "score=$score" >> $GITHUB_OUTPUT
+
+
+      - name: Compare with previous score
+        id: compare
+        run: |
+          current=${{ steps.extract.outputs.score }}
+          previous=$(cat .mutation-baseline 2>/dev/null || echo 0)
+
+          echo "Previous score: $previous%"
+          echo "Current score : $current%"
+
+          if (( $(echo "$current < $previous" | bc -l) )); then
+            echo "drop=true" >> $GITHUB_OUTPUT
+          else
+            echo "drop=false" >> $GITHUB_OUTPUT
+            echo "$current" > .mutation-baseline
+          fi
+
+      - name: Commit updated baseline
+        if: steps.compare.outputs.drop == 'false'
+        run: |
+          git config --local user.email "ci@example.com"
+          git config --local user.name "CI BOT"
+          git add .mutation-baseline
+          git commit -m "Update mutation baseline" || echo "No changes"
+
+  rickroll:
+    needs: pitest
+    runs-on: ubuntu-latest
+
+    # Rickroll se déclenche si :
+    # - le job pitest fail (tests cassés)
+    # - le score diminue (drop=true)
+    if: |
+      needs.pitest.result == 'failure' ||
+      needs.pitest.outputs.drop == 'true'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Rickroll
+        uses: ./.github/actions/rickroll
